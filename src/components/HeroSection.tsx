@@ -6,13 +6,13 @@ const HeroSection = () => {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=2000&q=80')",
+          backgroundImage: "url('https://images.blz-contentstack.com/v3/assets/blt45749e0fed8aa592/blt5558ea72c6f0cc25/64aef436593b3d103d62a634/D2R_S4_Social_1920x1080.jpg')",
         }}
       />
       <div className="container relative z-20 text-center">
         <div className="animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Welcome to <span className="text-diablo-500">Diablo Hub</span>
+            Welcome to <span className="text-diablo-500">TR The Throne Room</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
             Join our thriving community of Diablo players. Trade items, share strategies,

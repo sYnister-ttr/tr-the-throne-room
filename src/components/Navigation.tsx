@@ -9,7 +9,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <a href="/" className="text-diablo-500 font-semibold text-xl">
-              Diablo Hub
+              TR The Throne Room
             </a>
             <div className="hidden md:flex space-x-4">
               <a href="/market" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
