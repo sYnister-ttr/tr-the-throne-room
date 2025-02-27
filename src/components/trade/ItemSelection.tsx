@@ -41,29 +41,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   const [newPropertyValue, setNewPropertyValue] = useState("");
   const [isEthereal, setIsEthereal] = useState(false);
 
-  const getPropertySuggestions = () => {
-    if (selectedItemType === 'normal') {
-      if (['weapon', 'armor'].includes(selectedItemCategory)) {
-        return ["Sockets", "Enhanced Defense", "Enhanced Damage"];
-      }
-      return ["Quality", "Enhanced Defense"];
-    }
-    
-    if (selectedItemType === 'magic' || selectedItemType === 'rare') {
-      return ["Faster Cast Rate", "Life", "Mana", "Resistance", "Strength", "Dexterity"];
-    }
-    
-    if (selectedItemType === 'runeword') {
-      return ["Base Item", "Defense", "Sockets", "Enhanced Defense"];
-    }
-    
-    if (selectedItemType === 'unique' || selectedItemType === 'set') {
-      return ["Enhanced Defense", "Enhanced Damage", "Resistance", "Life", "Magic Find"];
-    }
-    
-    return [];
-  };
-
+  // Reset search and properties when game changes
   useEffect(() => {
     setSearchTerm("");
     setCustomProperties("");
@@ -73,6 +51,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setIsEthereal(false);
   }, [gameType]);
 
+  // Fetch items and runewords for the selected game
   const { data: searchResults = [], isLoading } = useQuery({
     queryKey: ["items-runewords-search", gameType, searchTerm],
     queryFn: async () => {
@@ -83,6 +62,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
       }
       
       try {
+        // Fetch items
         const { data: items = [], error: itemsError } = await supabase
           .from("items")
           .select("id, name, category, rarity")
@@ -97,6 +77,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
         console.log("Items found:", items.length);
 
+        // Fetch runewords
         const { data: runewords = [], error: runewordsError } = await supabase
           .from("runewords")
           .select("id, name, base_types")
@@ -111,6 +92,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
         console.log("Runewords found:", runewords.length);
 
+        // Combine and format results
         const formattedItems = items.map((item: any) => ({
           id: item.id,
           name: item.name,
@@ -137,26 +119,231 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     enabled: searchTerm.length >= 2
   });
 
+  // Get specific property suggestions based on selected item
+  const getItemSpecificProperties = () => {
+    const itemName = searchTerm.toLowerCase();
+    
+    // Specific runewords
+    if (selectedItemType === 'runeword') {
+      if (itemName === 'infinity') {
+        return [
+          { name: "Base Item", value: "" },
+          { name: "-% to Enemy Lightning Resistance", value: "" },
+          { name: "Lightning Absorb", value: "" },
+          { name: "Vitality", value: "" },
+          { name: "Critical Strike", value: "" }
+        ];
+      }
+      
+      if (itemName === 'enigma') {
+        return [
+          { name: "Base Item", value: "" },
+          { name: "+to Strength", value: "" },
+          { name: "+% Enhanced Defense", value: "" },
+          { name: "Magic Find", value: "" },
+          { name: "Damage Reduced", value: "" }
+        ];
+      }
+
+      if (itemName === 'call to arms') {
+        return [
+          { name: "Base Item", value: "" },
+          { name: "Battle Command", value: "" },
+          { name: "Battle Orders", value: "" },
+          { name: "Battle Cry", value: "" }
+        ];
+      }
+      
+      if (itemName === 'spirit') {
+        return [
+          { name: "Base Item", value: "" },
+          { name: "+to All Skills", value: "" },
+          { name: "Faster Cast Rate", value: "" },
+          { name: "Vitality", value: "" },
+          { name: "Mana", value: "" }
+        ];
+      }
+      
+      if (itemName === 'grief') {
+        return [
+          { name: "Base Item", value: "" },
+          { name: "+Damage", value: "" },
+          { name: "Increased Attack Speed", value: "" },
+          { name: "+to Life After Kill", value: "" }
+        ];
+      }
+      
+      // Default runeword properties
+      return [
+        { name: "Base Item", value: "" },
+        { name: "Sockets", value: "" },
+        { name: "+% Enhanced Defense", value: "" }
+      ];
+    }
+    
+    // Unique items
+    if (selectedItemType === 'unique') {
+      if (itemName === 'shako' || itemName === 'harlequin crest') {
+        return [
+          { name: "Defense", value: "" },
+          { name: "+to All Skills", value: "" },
+          { name: "Magic Find", value: "" },
+          { name: "+to Life", value: "" },
+          { name: "+to Mana", value: "" }
+        ];
+      }
+      
+      if (itemName === 'herald of zakarum' || itemName === 'hoz') {
+        return [
+          { name: "Enhanced Defense", value: "" },
+          { name: "Blocking", value: "" },
+          { name: "+to Paladin Skills", value: "" },
+          { name: "Resistances", value: "" }
+        ];
+      }
+
+      if (itemName.includes('oculus') || itemName.includes('occy')) {
+        return [
+          { name: "+to All Skills", value: "" },
+          { name: "Faster Cast Rate", value: "" },
+          { name: "Resistances", value: "" },
+          { name: "Magic Find", value: "" }
+        ];
+      }
+      
+      if (itemName.includes('stormshield')) {
+        return [
+          { name: "Enhanced Defense", value: "" },
+          { name: "Damage Reduction", value: "" },
+          { name: "Block", value: "" },
+          { name: "Cold Resistance", value: "" }
+        ];
+      }
+      
+      if (itemName.includes('titan')) {
+        return [
+          { name: "Enhanced Damage", value: "" },
+          { name: "Amazon Skills", value: "" },
+          { name: "Replenishes Quantity", value: "" },
+          { name: "Strength", value: "" },
+          { name: "Increased Attack Speed", value: "" }
+        ];
+      }
+    }
+    
+    // Type/category based suggestions
+    if (selectedItemType === 'normal') {
+      if (selectedItemCategory === 'weapon') {
+        return [
+          { name: "Sockets", value: "" },
+          { name: "Enhanced Damage", value: "" },
+          { name: "Attack Rating", value: "" }
+        ];
+      }
+      
+      if (selectedItemCategory === 'armor') {
+        return [
+          { name: "Sockets", value: "" },
+          { name: "Enhanced Defense", value: "" },
+          { name: "Defense", value: "" }
+        ];
+      }
+      
+      if (selectedItemCategory === 'jewelry') {
+        return [
+          { name: "Resistances", value: "" },
+          { name: "Faster Cast Rate", value: "" },
+          { name: "Magic Find", value: "" }
+        ];
+      }
+    }
+    
+    if (selectedItemType === 'magic' || selectedItemType === 'rare') {
+      if (selectedItemCategory === 'weapon') {
+        return [
+          { name: "Enhanced Damage", value: "" },
+          { name: "Attack Speed", value: "" },
+          { name: "Strength", value: "" },
+          { name: "Life Leech", value: "" }
+        ];
+      }
+      
+      if (selectedItemCategory === 'armor') {
+        return [
+          { name: "Enhanced Defense", value: "" },
+          { name: "Life", value: "" },
+          { name: "Resistances", value: "" },
+          { name: "Faster Hit Recovery", value: "" }
+        ];
+      }
+      
+      if (selectedItemCategory === 'jewelry') {
+        return [
+          { name: "Faster Cast Rate", value: "" },
+          { name: "Resistances", value: "" },
+          { name: "Life", value: "" },
+          { name: "Strength", value: "" },
+          { name: "Dexterity", value: "" }
+        ];
+      }
+    }
+    
+    // Default generic properties
+    return [
+      { name: "Defense", value: "" },
+      { name: "Damage", value: "" },
+      { name: "Requirements", value: "" }
+    ];
+  };
+
+  // Common property suggestions that apply to many items
+  const getCommonPropertySuggestions = () => {
+    const commonSuggestions = [
+      "Sockets", 
+      "Enhanced Defense", 
+      "Enhanced Damage",
+      "Resistance All", 
+      "Life", 
+      "Mana", 
+      "Strength",
+      "Dexterity",
+      "Faster Cast Rate",
+      "Magic Find",
+      "Blocking"
+    ];
+    
+    if (selectedItemType === 'runeword') {
+      return [...commonSuggestions, "Base Item Type", "+to All Skills", "Skill Level"];
+    }
+    
+    if (selectedItemType === 'unique' || selectedItemType === 'set') {
+      return [...commonSuggestions, "Variable Rolls", "Perfect Stats"];
+    }
+    
+    return commonSuggestions;
+  };
+
   const handleItemSelect = (item: ItemSearchResult) => {
     console.log("Selected item:", item);
     setSelectedItemType(item.itemType);
     setSelectedItemCategory(item.category);
     
+    // Reset properties
     setItemProperties([]);
     setIsEthereal(false);
+    setCustomProperties("");
     
     setSearchTerm(item.name);
     setOpen(false);
-    
-    if (item.itemType === 'runeword') {
-      setItemProperties([{ name: "Base Item", value: "" }]);
-    }
-    
-    if (['weapon', 'armor'].includes(item.category) && 
-        (item.itemType === 'normal' || item.itemType === 'magic' || item.itemType === 'rare')) {
-      setItemProperties([{ name: "Sockets", value: "" }]);
-    }
   };
+
+  // Set item-specific properties when search term is confirmed
+  useEffect(() => {
+    if (selectedItemType && searchTerm) {
+      // Add specific properties based on the selected item
+      setItemProperties(getItemSpecificProperties());
+    }
+  }, [selectedItemType, searchTerm, selectedItemCategory]);
 
   const addProperty = () => {
     if (!newPropertyName.trim()) return;
@@ -189,6 +376,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   };
 
   const handlePropertiesSubmit = () => {
+    // Format all properties into a string
     let propertyText = itemProperties
       .filter(prop => prop.name && prop.value)
       .map(prop => `${prop.name}: ${prop.value}`)
@@ -198,6 +386,11 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
       propertyText = `Ethereal\n${propertyText}`;
     }
     
+    // Add custom properties if any
+    if (customProperties.trim()) {
+      propertyText += '\n' + customProperties;
+    }
+    
     onItemSelect(searchTerm, propertyText);
   };
 
@@ -205,6 +398,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setNewPropertyName(suggestion);
   };
 
+  // Determine if we should show properties form
   const shouldShowProperties = () => {
     return selectedItemType && [
       'normal', 'magic', 'rare', 'unique', 'set', 'runeword'
@@ -263,6 +457,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         </PopoverContent>
       </Popover>
 
+      {/* Item Properties Form */}
       {shouldShowProperties() && (
         <div className="space-y-4 p-4 border rounded-md">
           <div className="flex justify-between items-center">
@@ -281,6 +476,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             )}
           </div>
           
+          {/* Property List */}
           <div className="space-y-2">
             {itemProperties.map((prop, index) => (
               <div key={index} className="flex items-center space-x-2">
@@ -307,10 +503,11 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             ))}
           </div>
 
+          {/* Add new property */}
           <div className="space-y-2">
             <Label>Add Property</Label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {getPropertySuggestions().map((suggestion, i) => (
+              {getCommonPropertySuggestions().map((suggestion, i) => (
                 <Button 
                   key={i} 
                   variant="outline" 
@@ -346,6 +543,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             </div>
           </div>
 
+          {/* Other properties textarea for anything not covered by the structured inputs */}
           <div className="space-y-2">
             <Label htmlFor="customProperties">Additional Details</Label>
             <Textarea
