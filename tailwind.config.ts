@@ -20,8 +20,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        'gothic': ['MedievalSharp', 'Pirata One', 'Cinzel', 'serif'],
-        'diablo': ['Exocet', 'MedievalSharp', 'Cinzel Decorative', 'serif'],
+        'gothic': ['Cinzel', 'serif'],
+        'diablo': ['Cinzel Decorative', 'serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
