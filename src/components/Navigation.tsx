@@ -10,16 +10,16 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4">
-        <Link to="/" className="font-bold text-xl">TR</Link>
+        <Link to="/" className="font-diablo text-xl text-diablo-500">TR</Link>
         <div className="flex-1" />
         <div className="flex items-center gap-4">
           {user ? (
             <>
               <Link to="/market">
-                <Button variant="ghost">Market</Button>
+                <Button variant="ghost" className="uppercase tracking-wide font-gothic">Market</Button>
               </Link>
               <Link to="/market/price-check">
-                <Button variant="ghost">Price Check</Button>
+                <Button variant="ghost" className="uppercase tracking-wide font-gothic">Price Check</Button>
               </Link>
               <Link to="/profile">
                 <Button variant="ghost" size="icon">
@@ -29,7 +29,7 @@ const Navigation = () => {
             </>
           ) : (
             <Link to="/login">
-              <Button>Login</Button>
+              <Button className="uppercase tracking-wide font-gothic">Login</Button>
             </Link>
           )}
         </div>

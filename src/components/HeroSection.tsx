@@ -20,14 +20,14 @@ const HeroSection = () => {
               className="w-60 md:w-80 h-auto"
             />
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-diablo-500 mb-6 drop-shadow-[0_0_15px_rgba(255,61,61,0.3)]">
+          <h1 className="text-5xl md:text-7xl font-bold text-diablo-500 mb-6 drop-shadow-[0_0_15px_rgba(255,61,61,0.3)] uppercase tracking-wider">
             Welcome to TR The Throne Room
           </h1>
           <p className="text-xl md:text-2xl text-gray-200 mb-8 max-w-2xl mx-auto">
             Your ultimate destination for Diablo trading and community. Join fellow players in the pursuit of legendary items and wealth.
           </p>
           <Button
-            className="bg-diablo-600 hover:bg-diablo-700 text-white flex items-center gap-2 px-6 py-6 text-lg shadow-[0_0_15px_rgba(255,61,61,0.3)] transition-all hover:shadow-[0_0_25px_rgba(255,61,61,0.5)] mx-auto"
+            className="bg-diablo-600 hover:bg-diablo-700 text-white flex items-center gap-2 px-6 py-6 text-lg shadow-[0_0_15px_rgba(255,61,61,0.3)] transition-all hover:shadow-[0_0_25px_rgba(255,61,61,0.5)] mx-auto uppercase tracking-wide"
             onClick={() => window.open('https://discord.gg/kTYCSbgGgH', '_blank')}
           >
             <MessageSquare className="w-6 h-6" />
