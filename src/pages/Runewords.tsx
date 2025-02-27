@@ -8,8 +8,13 @@ import RunewordCard from "@/components/RunewordCard";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Runewords = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [gameFilter, setGameFilter] = useState<GameType>("diablo2_resurrected");
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
@@ -52,11 +57,21 @@ const Runewords = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12">
-        <h1 className="text-3xl font-bold text-white mb-8">Runewords Database</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
+          {user && (
+            <Button 
+              onClick={() => navigate("/runewords/add")}
+              className="bg-diablo-600 hover:bg-diablo-700"
+            >
+              Add Runeword
+            </Button>
+          )}
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-secondary p-6 rounded-lg space-y-4">
+            <div className="bg-secondary/30 p-6 rounded-lg space-y-4">
               <h3 className="font-bold text-lg mb-4">Filters</h3>
               
               <div className="space-y-2">

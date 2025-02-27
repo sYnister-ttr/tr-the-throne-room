@@ -196,6 +196,45 @@ export type Database = {
         }
         Relationships: []
       }
+      runewords: {
+        Row: {
+          base_types: string[]
+          created_at: string
+          fixed_stats: string[]
+          game: string
+          id: string
+          name: string
+          required_level: number
+          runes: string[]
+          updated_at: string
+          variable_stats: Json
+        }
+        Insert: {
+          base_types: string[]
+          created_at?: string
+          fixed_stats?: string[]
+          game: string
+          id?: string
+          name: string
+          required_level?: number
+          runes: string[]
+          updated_at?: string
+          variable_stats?: Json
+        }
+        Update: {
+          base_types?: string[]
+          created_at?: string
+          fixed_stats?: string[]
+          game?: string
+          id?: string
+          name?: string
+          required_level?: number
+          runes?: string[]
+          updated_at?: string
+          variable_stats?: Json
+        }
+        Relationships: []
+      }
       terror_zones: {
         Row: {
           created_at: string | null

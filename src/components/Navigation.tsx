@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMobile } from "@/hooks/use-mobile";
+import useMobile from "@/hooks/use-mobile";
 
 const Navigation = () => {
   const { user, signOut } = useAuth();
