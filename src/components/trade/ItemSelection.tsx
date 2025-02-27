@@ -413,6 +413,15 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     ].includes(selectedItemType);
   };
 
+  // If no search results are available but we have a search term, let's provide a way to create a custom item
+  const handleCreateCustomItem = () => {
+    // Set some default values based on the search term
+    setSelectedItemType('normal');
+    setSelectedItemCategory('weapon');
+    setSearchTerm(searchTerm); // Keep the search term
+    setOpen(false);
+  };
+
   return (
     <div className="space-y-4">
       <Popover open={open} onOpenChange={setOpen}>
@@ -437,7 +446,22 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             />
             <CommandList>
               <CommandEmpty>
-                {isLoading ? "Loading..." : searchTerm.length < 2 ? "Type at least 2 characters to search" : "No items found."}
+                {isLoading ? (
+                  "Loading..."
+                ) : searchTerm.length < 2 ? (
+                  "Type at least 2 characters to search"
+                ) : (
+                  <div className="p-2 text-center">
+                    <p className="mb-2">No items found.</p>
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      onClick={handleCreateCustomItem}
+                    >
+                      Use "{searchTerm}" as custom item
+                    </Button>
+                  </div>
+                )}
               </CommandEmpty>
               <CommandGroup>
                 {searchResults.map((item: ItemSearchResult) => (
@@ -545,11 +569,13 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                 value={newPropertyName}
                 onChange={(e) => setNewPropertyName(e.target.value)}
                 className="flex-1"
+                placeholder="Property name"
               />
               <Input
                 value={newPropertyValue}
                 onChange={(e) => setNewPropertyValue(e.target.value)}
                 className="flex-1"
+                placeholder="Value"
               />
               <Button 
                 variant="outline"
