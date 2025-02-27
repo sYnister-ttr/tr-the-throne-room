@@ -68,8 +68,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        // Type assertion to match UserWithRole
-        const userWithoutRole = session.user as UserWithRole;
+        // Create a new object with the User properties and treat it as UserWithRole
+        const userWithoutRole: UserWithRole = { ...session.user };
         setUser(userWithoutRole);
         
         fetchUserRole(userWithoutRole.id).then(role => {
@@ -90,8 +90,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for changes on auth state (sign in, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        // Type assertion to match UserWithRole
-        const userWithoutRole = session.user as UserWithRole;
+        // Create a new object with the User properties and treat it as UserWithRole
+        const userWithoutRole: UserWithRole = { ...session.user };
         setUser(userWithoutRole);
         
         const role = await fetchUserRole(userWithoutRole.id);
