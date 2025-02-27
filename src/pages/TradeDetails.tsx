@@ -8,11 +8,17 @@ import { useToast } from "@/components/ui/use-toast";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatDistanceToNow } from "date-fns";
 
 interface TradeOffer {
   id: string;
   offer_details: string;
+  price_offered: number | null;
+  items_offered: string | null;
+  payment_type: 'currency' | 'items';
   status: string;
   created_at: string;
   profiles: {
@@ -25,7 +31,10 @@ const TradeDetails = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [priceOffered, setPriceOffered] = useState("");
+  const [itemsOffered, setItemsOffered] = useState("");
   const [offerDetails, setOfferDetails] = useState("");
+  const [paymentType, setPaymentType] = useState<'currency' | 'items'>('currency');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: trade, isLoading: tradeLoading } = useQuery({
@@ -73,6 +82,9 @@ const TradeDetails = () => {
         .insert({
           trade_id: id,
           user_id: user.id,
+          payment_type: paymentType,
+          price_offered: paymentType === 'currency' ? parseFloat(priceOffered) : null,
+          items_offered: paymentType === 'items' ? itemsOffered : null,
           offer_details: offerDetails,
         });
 
@@ -82,6 +94,8 @@ const TradeDetails = () => {
         title: "Success",
         description: "Your offer has been submitted!",
       });
+      setPriceOffered("");
+      setItemsOffered("");
       setOfferDetails("");
       refetchOffers();
     } catch (error: any) {
@@ -160,14 +174,61 @@ const TradeDetails = () => {
           {canMakeOffer && (
             <form onSubmit={handleSubmitOffer} className="bg-secondary p-6 rounded-lg space-y-4">
               <h2 className="text-xl font-semibold text-white">Make an Offer</h2>
+              
+              <RadioGroup
+                defaultValue="currency"
+                value={paymentType}
+                onValueChange={(value: 'currency' | 'items') => setPaymentType(value)}
+                className="grid grid-cols-2 gap-4 mb-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="currency" id="currency" />
+                  <Label htmlFor="currency">Forum Gold (FG)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="items" id="items" />
+                  <Label htmlFor="items">Items</Label>
+                </div>
+              </RadioGroup>
+
+              {paymentType === 'currency' ? (
+                <div>
+                  <Label htmlFor="priceOffered">Price Offered (FG)</Label>
+                  <Input
+                    id="priceOffered"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={priceOffered}
+                    onChange={(e) => setPriceOffered(e.target.value)}
+                    placeholder="Enter your offer in FG"
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="itemsOffered">Items Offered</Label>
+                  <Textarea
+                    id="itemsOffered"
+                    value={itemsOffered}
+                    onChange={(e) => setItemsOffered(e.target.value)}
+                    placeholder="List the items you want to trade..."
+                    required
+                  />
+                </div>
+              )}
+
               <div>
+                <Label htmlFor="offerDetails">Additional Details</Label>
                 <Textarea
+                  id="offerDetails"
                   value={offerDetails}
                   onChange={(e) => setOfferDetails(e.target.value)}
-                  placeholder="Describe your offer..."
+                  placeholder="Add any additional information about your offer..."
                   required
                 />
               </div>
+
               <Button
                 type="submit"
                 className="w-full bg-diablo-600 hover:bg-diablo-700"
@@ -187,14 +248,24 @@ const TradeDetails = () => {
                     {offer.profiles?.username} offered{" "}
                     {formatDistanceToNow(new Date(offer.created_at))} ago
                   </p>
-                  {offer.status !== 'pending' && (
-                    <span className={`px-2 py-1 text-white text-sm rounded ${
-                      offer.status === 'accepted' ? 'bg-green-600' : 'bg-red-600'
-                    }`}>
-                      {offer.status}
+                  <div className="flex items-center gap-2">
+                    {offer.status !== 'pending' && (
+                      <span className={`px-2 py-1 text-white text-sm rounded ${
+                        offer.status === 'accepted' ? 'bg-green-600' : 'bg-red-600'
+                      }`}>
+                        {offer.status}
+                      </span>
+                    )}
+                    <span className="px-2 py-1 bg-diablo-600 text-white text-sm rounded">
+                      {offer.payment_type === 'currency' 
+                        ? `${offer.price_offered} FG`
+                        : 'Items Offered'}
                     </span>
-                  )}
+                  </div>
                 </div>
+                {offer.payment_type === 'items' && (
+                  <p className="text-gray-200 mb-2">{offer.items_offered}</p>
+                )}
                 <p className="text-gray-200">{offer.offer_details}</p>
                 {isOwner && trade.status === 'active' && offer.status === 'pending' && (
                   <div className="mt-4 flex gap-2 justify-end">
