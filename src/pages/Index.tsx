@@ -3,6 +3,7 @@ import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import FeaturedTrades from "@/components/FeaturedTrades";
 import UserProfileCard from "@/components/UserProfileCard";
+import GameStatusInfo from "@/components/GameStatusInfo";
 
 const Index = () => {
   return (
@@ -19,6 +20,7 @@ const Index = () => {
               <FeaturedTrades />
             </div>
             <div className="space-y-6">
+              <GameStatusInfo />
               <h2 className="text-2xl font-bold text-diablo-500 mb-4 drop-shadow-[0_0_10px_rgba(255,61,61,0.3)] uppercase tracking-wider">
                 Featured Members
               </h2>
