@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase, checkTableAccess } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface PriceCheck {
   id: string;
@@ -21,6 +22,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   const [loading, setLoading] = useState(true);
   const [accessError, setAccessError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("PriceCheckList component mounted, userId:", userId);
@@ -28,22 +30,42 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   }, [userId]);
 
   const checkTablePermissions = async () => {
-    // Check if we can access the price_checks table (RLS check)
-    const hasAccess = await checkTableAccess("price_checks");
-    if (!hasAccess) {
-      console.error("No access to price_checks table. Check RLS policies.");
-      setAccessError("Unable to access price checks data. Please check Supabase RLS policies.");
+    try {
+      // Check if we can access the price_checks table (RLS check)
+      const hasAccess = await checkTableAccess("price_checks");
+      
+      if (!hasAccess) {
+        console.error("No access to price_checks table. Check RLS policies.");
+        setAccessError("Unable to access price checks data. Please check Supabase RLS policies.");
+        setLoading(false);
+        return;
+      }
+      
+      await fetchPriceChecks();
+    } catch (error) {
+      console.error("Error checking table permissions:", error);
+      setAccessError("Error checking database access. Please try again later.");
       setLoading(false);
-      return;
     }
-    
-    fetchPriceChecks();
   };
 
   const fetchPriceChecks = async () => {
     try {
       console.log("Fetching price checks for userId:", userId);
       setLoading(true);
+      
+      // Use a try-catch block for direct Supabase test to diagnose issues
+      try {
+        const testQuery = await supabase.from("price_checks").select("id").limit(1);
+        console.log("Test query result:", testQuery);
+        
+        if (testQuery.error) {
+          console.error("Supabase test query error:", testQuery.error);
+          throw new Error(`Supabase connection test failed: ${testQuery.error.message}`);
+        }
+      } catch (testError) {
+        console.error("Test query exception:", testError);
+      }
       
       let query = supabase
         .from("price_checks")
@@ -86,7 +108,12 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   };
 
   if (loading) {
-    return <div className="text-center py-4 text-gray-400">Loading price checks...</div>;
+    return (
+      <div className="text-center py-4 text-gray-400">
+        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+        <p>Loading price checks...</p>
+      </div>
+    );
   }
 
   if (accessError) {
@@ -97,6 +124,14 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
           This is likely due to Supabase Row Level Security (RLS) policies.
           You may need to enable public read access to the price_checks table.
         </p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-4"
+          onClick={() => checkTablePermissions()}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -107,7 +142,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
         <p className="text-gray-400 mb-4">No price checks found.</p>
         {userId && (
           <Button 
-            onClick={() => window.location.href = "/price-check"}
+            onClick={() => navigate("/price-check")}
             className="bg-diablo-600 hover:bg-diablo-700"
           >
             Create a Price Check
@@ -140,7 +175,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.location.href = `/price-check/${check.id}`}
+              onClick={() => navigate(`/price-check/${check.id}`)}
             >
               View Details
             </Button>
