@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +16,6 @@ import { GameType, PlatformType, GameModeType, LadderType, PaymentType } from "@
 const CreateTrade = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -29,21 +27,6 @@ const CreateTrade = () => {
   const [ladderStatus, setLadderStatus] = useState<LadderType>("non_ladder");
   const [paymentType, setPaymentType] = useState<PaymentType>("currency");
   const [paymentItems, setPaymentItems] = useState("");
-
-  useEffect(() => {
-    // Check if user is authenticated
-    if (!authLoading && !user) {
-      console.log("CreateTrade - No user found, redirecting to login");
-      toast({
-        variant: "destructive",
-        title: "Authentication Required",
-        description: "You must be logged in to create a trade listing.",
-      });
-      navigate("/login");
-    } else if (!authLoading && user) {
-      console.log("CreateTrade - User authenticated:", user.id);
-    }
-  }, [user, authLoading, navigate, toast]);
 
   useEffect(() => {
     setGameMode('softcore');
@@ -62,24 +45,15 @@ const CreateTrade = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user) {
-      console.log("CreateTrade - Submit attempted without user");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to create a trade.",
-      });
-      navigate("/login");
-      return;
-    }
-    
     setLoading(true);
-    console.log("CreateTrade - Submit started with user:", user.id);
+    console.log("CreateTrade - Submit started");
 
     try {
+      // Generate a temporary user ID for demo purposes
+      const tempUserId = `temp_${Date.now().toString()}`;
+      
       const tradeData = {
-        user_id: user.id,
+        user_id: tempUserId,
         title,
         description,
         game,
@@ -122,42 +96,6 @@ const CreateTrade = () => {
       setLoading(false);
     }
   };
-
-  // Show loading state while authentication is being checked
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-4 pt-24">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Loading...</h2>
-            <p className="text-gray-400">Please wait while we verify your account.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login prompt if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-4 pt-24">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Authentication Required</h2>
-            <p className="text-gray-400 mb-6">You need to be logged in to create a trade listing.</p>
-            <Button 
-              onClick={() => navigate("/login")}
-              className="bg-diablo-600 hover:bg-diablo-700"
-            >
-              Log In
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
