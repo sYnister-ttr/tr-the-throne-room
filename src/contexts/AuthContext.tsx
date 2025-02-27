@@ -1,26 +1,12 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { createContext, useEffect, useState } from "react";
+import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { AuthContextType, UserRole, UserWithRole } from "@/types/auth";
+import { fetchUserRole, signOutUser } from "@/utils/auth-utils";
 
-export type UserRole = "admin" | "moderator" | "user";
-
-interface UserWithRole extends User {
-  role?: UserRole;
-}
-
-interface AuthContextType {
-  user: UserWithRole | null;
-  session: Session | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-  isAdmin: boolean;
-  isModerator: boolean;
-  refreshUserRole: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType>({ 
+export const AuthContext = createContext<AuthContextType>({ 
   user: null,
   session: null,
   loading: true,
@@ -38,28 +24,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isModerator, setIsModerator] = useState(false);
   const { toast } = useToast();
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      console.log("Fetching role for user ID:", userId);
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return null;
-      }
-      
-      console.log("User role data:", data);
-      return data?.role || 'user';
-    } catch (error) {
-      console.error("Exception fetching user role:", error);
-      return null;
-    }
-  };
-
   const refreshUserRole = async () => {
     if (!user) return;
     
@@ -67,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const role = await fetchUserRole(user.id);
       if (role) {
-        setUser({ ...user, role: role as UserRole });
+        setUser({ ...user, role });
         setIsAdmin(role === 'admin');
         setIsModerator(role === 'moderator' || role === 'admin');
       }
@@ -111,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           const role = await fetchUserRole(userWithoutRole.id);
           if (role && mounted) {
-            setUser({ ...userWithoutRole, role: role as UserRole });
+            setUser({ ...userWithoutRole, role });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
           }
@@ -156,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           const role = await fetchUserRole(userWithoutRole.id);
           if (role && mounted) {
-            setUser({ ...userWithoutRole, role: role as UserRole });
+            setUser({ ...userWithoutRole, role });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
           }
@@ -183,7 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       console.log("Signing out user");
-      const { error } = await supabase.auth.signOut();
+      const { error } = await signOutUser();
       if (error) {
         console.error("Error signing out:", error);
         toast({
@@ -228,10 +192,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+// Export the context type for easier importing
+export type { UserRole, UserWithRole, AuthContextType } from "@/types/auth";
