@@ -2,11 +2,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { GameType, Item } from "@/types/items";
 
 interface ItemSelectionProps {
@@ -28,24 +27,34 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["items-selection", gameType, searchTerm],
     queryFn: async () => {
-      let query = supabase
-        .from("items")
-        .select("*")
-        .eq("game", gameType);
+      console.log("Fetching items for game:", gameType);
       
-      if (searchTerm) {
-        query = query.ilike("name", `%${searchTerm}%`);
-      }
+      try {
+        let query = supabase
+          .from("items")
+          .select("*")
+          .eq("game", gameType);
+        
+        if (searchTerm && searchTerm.trim() !== "") {
+          query = query.ilike("name", `%${searchTerm}%`);
+        }
 
-      const { data, error } = await query.order("name").limit(10);
-      
-      if (error) {
-        console.error("Error fetching items:", error);
+        const { data, error } = await query.order("name").limit(20);
+        
+        if (error) {
+          console.error("Error fetching items:", error);
+          return [];
+        }
+        
+        console.log("Items fetched:", data?.length || 0, data);
+        return data as Item[];
+      } catch (error) {
+        console.error("Exception fetching items:", error);
         return [];
       }
-      
-      return data as Item[];
-    }
+    },
+    // Always fetch some initial items, even without search term
+    enabled: true
   });
 
   const handleItemSelect = (item: Item) => {
@@ -53,6 +62,9 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setSearchTerm(item.name);
     setOpen(false);
   };
+
+  // Debug render - show items count
+  console.log("Rendering with items:", items?.length || 0);
 
   return (
     <div className="space-y-2">
@@ -63,6 +75,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between"
+            onClick={() => setOpen(true)}
           >
             {selectedItem || "Select an item..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -74,10 +87,11 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
               placeholder="Search items..."
               value={searchTerm}
               onValueChange={setSearchTerm}
+              className="h-9"
             />
             <CommandList>
               <CommandEmpty>
-                {isLoading ? "Loading..." : "No items found."}
+                {isLoading ? "Loading..." : "No items found for this game."}
               </CommandEmpty>
               <CommandGroup>
                 {items.map((item) => (
