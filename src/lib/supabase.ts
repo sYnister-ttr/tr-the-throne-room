@@ -21,8 +21,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   // Add global error handler for debugging
   global: {
-    fetch: (...args) => {
-      return fetch(...args).catch(error => {
+    fetch: (url: RequestInfo | URL, options?: RequestInit) => {
+      return fetch(url, options).catch(error => {
         console.error("Supabase fetch error:", error);
         throw error;
       });
