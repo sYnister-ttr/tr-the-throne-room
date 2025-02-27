@@ -47,6 +47,7 @@ export type Database = {
       price_checks: {
         Row: {
           created_at: string
+          description: string | null
           game: Database["public"]["Enums"]["game_type"]
           id: string
           item_name: string
@@ -58,6 +59,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
           game: Database["public"]["Enums"]["game_type"]
           id?: string
           item_name: string
@@ -69,6 +71,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
           game?: Database["public"]["Enums"]["game_type"]
           id?: string
           item_name?: string
