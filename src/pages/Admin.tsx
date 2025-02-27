@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 
+interface ItemStats {
+  total: number;
+  d2Count: number;
+  d4Count: number;
+}
+
 const AdminPage = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -21,34 +27,47 @@ const AdminPage = () => {
   const { data: itemStats } = useQuery({
     queryKey: ["itemStats"],
     queryFn: async () => {
-      const { data: total, error: totalError } = await supabase
-        .from('items')
-        .select('*', { count: 'exact', head: true });
-      
-      const { data: d2Items, error: d2Error } = await supabase
-        .from('items')
-        .select('*', { count: 'exact', head: true })
-        .eq('game', 'diablo2_resurrected');
+      try {
+        // Get total count
+        const { count: totalCount, error: totalError } = await supabase
+          .from('items')
+          .select('*', { count: 'exact', head: true });
         
-      const { data: d4Items, error: d4Error } = await supabase
-        .from('items')
-        .select('*', { count: 'exact', head: true })
-        .eq('game', 'diablo4');
-      
-      if (totalError || d2Error || d4Error) {
+        if (totalError) throw totalError;
+        
+        // Get Diablo 2 items count
+        const { count: d2Count, error: d2Error } = await supabase
+          .from('items')
+          .select('*', { count: 'exact', head: true })
+          .eq('game', 'diablo2_resurrected');
+        
+        if (d2Error) throw d2Error;
+        
+        // Get Diablo 4 items count
+        const { count: d4Count, error: d4Error } = await supabase
+          .from('items')
+          .select('*', { count: 'exact', head: true })
+          .eq('game', 'diablo4');
+        
+        if (d4Error) throw d4Error;
+        
+        return {
+          total: totalCount || 0,
+          d2Count: d2Count || 0,
+          d4Count: d4Count || 0,
+        } as ItemStats;
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Error fetching statistics",
-          description: totalError?.message || d2Error?.message || d4Error?.message,
+          description: error.message,
         });
-        return null;
+        return {
+          total: 0,
+          d2Count: 0,
+          d4Count: 0,
+        } as ItemStats;
       }
-      
-      return {
-        total: total?.count || 0,
-        d2Count: d2Items?.count || 0,
-        d4Count: d4Items?.count || 0,
-      };
     },
   });
 
@@ -77,7 +96,7 @@ const AdminPage = () => {
         title: "Import Successful",
         description: `Imported ${result.imported} items from ${category}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Import error:", error);
       toast({
         variant: "destructive",

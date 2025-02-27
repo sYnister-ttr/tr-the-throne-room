@@ -6,13 +6,13 @@ import { supabase } from "@/lib/supabase";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  logout: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   loading: true,
-  logout: async () => {} 
+  signOut: async () => {} 
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -35,13 +35,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const logout = async () => {
+  const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
