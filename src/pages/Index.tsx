@@ -4,6 +4,8 @@ import HeroSection from "@/components/HeroSection";
 import FeaturedTrades from "@/components/FeaturedTrades";
 import UserProfileCard from "@/components/UserProfileCard";
 import GameStatusInfo from "@/components/GameStatusInfo";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -18,6 +20,14 @@ const Index = () => {
                 Featured Trades
               </h2>
               <FeaturedTrades />
+              
+              <div className="mt-8 flex justify-center">
+                <Link to="/items">
+                  <Button variant="outline" className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white">
+                    Browse Item Database
+                  </Button>
+                </Link>
+              </div>
             </div>
             <div className="space-y-6">
               <GameStatusInfo />

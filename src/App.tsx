@@ -13,6 +13,7 @@ import TradeDetails from "@/pages/TradeDetails";
 import PriceCheck from "@/pages/PriceCheck";
 import PriceCheckDetails from "@/pages/PriceCheckDetails";
 import Profile from "@/pages/Profile";
+import ItemDatabase from "@/pages/ItemDatabase";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/items" element={<ItemDatabase />} />
           </Routes>
           <Toaster />
         </AuthProvider>
