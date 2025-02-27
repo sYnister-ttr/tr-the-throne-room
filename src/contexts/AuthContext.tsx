@@ -1,8 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
 
 export type UserRole = "admin" | "moderator" | "user";
 
@@ -12,7 +11,6 @@ interface UserWithRole extends User {
 
 interface AuthContextType {
   user: UserWithRole | null;
-  session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -21,8 +19,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({ 
-  user: null,
-  session: null,
+  user: null, 
   loading: true,
   signOut: async () => {},
   isAdmin: false,
@@ -32,11 +29,9 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserWithRole | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModerator, setIsModerator] = useState(false);
-  const { toast } = useToast();
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -75,24 +70,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Initial auth state check
     const checkSession = async () => {
       try {
-        console.log("Checking initial auth session...");
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting session:", error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Failed to get authentication session. Please try logging in again.",
-          });
-          setLoading(false);
-          return;
-        }
+        const { data } = await supabase.auth.getSession();
         
         if (data.session?.user) {
           console.log("Found authenticated user:", data.session.user.id);
-          setSession(data.session);
-          
           const userWithoutRole = { 
             ...data.session.user,
             role: undefined as unknown as UserRole
@@ -109,17 +90,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           console.log("No authenticated user found");
           setUser(null);
-          setSession(null);
           setIsAdmin(false);
           setIsModerator(false);
         }
       } catch (error) {
-        console.error("Exception checking session:", error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "An unexpected error occurred. Please try logging in again.",
-        });
+        console.error("Error checking session:", error);
       } finally {
         setLoading(false);
       }
@@ -133,8 +108,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.id);
         
         if (session?.user) {
-          setSession(session);
-          
           const userWithoutRole = { 
             ...session.user,
             role: undefined as unknown as UserRole
@@ -150,7 +123,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } else {
           setUser(null);
-          setSession(null);
           setIsAdmin(false);
           setIsModerator(false);
         }
@@ -162,43 +134,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
   const signOut = async () => {
     try {
-      console.log("Signing out user");
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Error signing out:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to sign out",
-        });
-      } else {
-        setUser(null);
-        setSession(null);
-        setIsAdmin(false);
-        setIsModerator(false);
-        toast({
-          title: "Signed Out",
-          description: "You have been successfully signed out",
-        });
-      }
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAdmin(false);
+      setIsModerator(false);
     } catch (error) {
-      console.error("Exception signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred while signing out",
-      });
+      console.error("Error signing out:", error);
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
-      session,
       loading, 
       signOut, 
       isAdmin, 
