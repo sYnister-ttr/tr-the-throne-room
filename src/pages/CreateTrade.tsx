@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import PaymentSection from "@/components/trade/PaymentSection";
 import GameSettings from "@/components/trade/GameSettings";
+import ItemSelection from "@/components/trade/ItemSelection";
 import { GameType, PlatformType, GameModeType, LadderType, PaymentType } from "@/types/trading";
 
 const CreateTrade = () => {
@@ -21,6 +22,7 @@ const CreateTrade = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [selectedItem, setSelectedItem] = useState("");
   const [game, setGame] = useState<GameType>("diablo4");
   const [platform, setPlatform] = useState<PlatformType>("pc");
   const [gameMode, setGameMode] = useState<GameModeType>("softcore");
@@ -31,7 +33,15 @@ const CreateTrade = () => {
   useEffect(() => {
     setGameMode('softcore');
     setLadderStatus(game === 'diablo2_resurrected' ? 'non_ladder' : 'not_applicable');
+    setSelectedItem(""); // Reset selected item when game changes
   }, [game]);
+
+  // Set title based on selected item
+  useEffect(() => {
+    if (selectedItem) {
+      setTitle(`Selling ${selectedItem}`);
+    }
+  }, [selectedItem]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +88,15 @@ const CreateTrade = () => {
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-8">List an Item</h1>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <Label>Select Item</Label>
+              <ItemSelection 
+                gameType={game}
+                onItemSelect={setSelectedItem}
+                selectedItem={selectedItem}
+              />
+            </div>
+            
             <div>
               <Label htmlFor="title">Title</Label>
               <Input
@@ -130,7 +149,7 @@ const CreateTrade = () => {
               <Button
                 type="submit"
                 className="bg-diablo-600 hover:bg-diablo-700"
-                disabled={loading}
+                disabled={loading || !selectedItem}
               >
                 {loading ? "Creating..." : "Create Listing"}
               </Button>
