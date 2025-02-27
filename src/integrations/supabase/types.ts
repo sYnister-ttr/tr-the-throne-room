@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      dclone_status: {
+        Row: {
+          created_at: string | null
+          id: string
+          progress: string
+          region: string
+          status: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          progress: string
+          region: string
+          status: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          progress?: string
+          region?: string
+          status?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       price_check_responses: {
         Row: {
           comment: string | null
@@ -121,6 +148,30 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string
+        }
+        Relationships: []
+      }
+      terror_zones: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          server: string
+          zone_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          server: string
+          zone_name: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          server?: string
+          zone_name?: string
         }
         Relationships: []
       }
