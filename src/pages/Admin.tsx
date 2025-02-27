@@ -7,7 +7,7 @@ import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -406,7 +406,8 @@ const Admin = () => {
       case 'admin':
         return <Badge variant="destructive" className="capitalize">{role}</Badge>;
       case 'moderator':
-        return <Badge variant="warning" className="bg-yellow-500 capitalize">{role}</Badge>;
+        // FIX: Changed from "warning" (which doesn't exist) to "secondary" with custom style
+        return <Badge variant="secondary" className="bg-yellow-500 text-white capitalize">{role}</Badge>;
       default:
         return <Badge variant="secondary" className="capitalize">{role}</Badge>;
     }
