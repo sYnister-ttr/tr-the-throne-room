@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import UserTrades from "@/components/UserTrades";
 import PriceCheckList from "@/components/PriceCheckList";
 import UserProfileCard from "@/components/UserProfileCard";

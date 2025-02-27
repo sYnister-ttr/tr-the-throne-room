@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Trade } from "@/types/trading";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import TradeCard from "@/components/TradeCard";
 import PriceCheckList from "@/components/PriceCheckList";
 
