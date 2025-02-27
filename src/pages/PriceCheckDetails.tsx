@@ -36,14 +36,14 @@ const PriceCheckDetails = () => {
   const [paymentType, setPaymentType] = useState<'currency' | 'items'>('currency');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: priceCheck, refetch } = useQuery({
+  const { data: priceCheck } = useQuery({
     queryKey: ['price-check', id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('price_checks')
         .select(`
           *,
-          profiles!price_checks_user_id_fkey (username)
+          profiles (username)
         `)
         .eq('id', id)
         .single();
@@ -60,7 +60,7 @@ const PriceCheckDetails = () => {
         .from('price_check_responses')
         .select(`
           *,
-          profiles!price_check_responses_user_id_fkey (username)
+          profiles (username)
         `)
         .eq('price_check_id', id)
         .order('created_at', { ascending: false });
@@ -96,6 +96,19 @@ const PriceCheckDetails = () => {
       setEstimatedPrice("");
       setItemsOffered("");
       setComment("");
+      
+      // Refetch the responses after successful submission
+      const { refetch } = useQuery({
+        queryKey: ['price-check-responses', id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('price_check_responses')
+            .select('*')
+            .eq('price_check_id', id);
+          if (error) throw error;
+          return data;
+        },
+      });
       refetch();
     } catch (error: any) {
       toast({
@@ -108,7 +121,16 @@ const PriceCheckDetails = () => {
     }
   };
 
-  if (!priceCheck) return null;
+  if (!priceCheck) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 pt-24">
+          <div className="text-center">Loading price check details...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
