@@ -209,7 +209,7 @@ const AdminPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="max-h-60 overflow-y-auto space-y-1">
-                  {importResults.items.map((item: string, index: number) => (
+                  {importResults.items && importResults.items.map((item: string, index: number) => (
                     <div key={index} className="text-sm py-1 border-b border-gray-700">
                       {item}
                     </div>
