@@ -14,6 +14,8 @@ import PriceCheck from "@/pages/PriceCheck";
 import PriceCheckDetails from "@/pages/PriceCheckDetails";
 import Profile from "@/pages/Profile";
 import ItemDatabase from "@/pages/ItemDatabase";
+import AdminPage from "@/pages/Admin";
+import NotFound from "@/pages/NotFound";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -76,6 +78,15 @@ function App() {
               }
             />
             <Route path="/items" element={<ItemDatabase />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
         </AuthProvider>
