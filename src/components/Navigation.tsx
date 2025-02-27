@@ -2,9 +2,31 @@
 import { Button } from "@/components/ui/button";
 import { Shield, ShoppingCart, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "./ui/use-toast";
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+      navigate("/login");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   return (
     <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-sm border-b border-gray-800 z-50">
@@ -30,19 +52,34 @@ const Navigation = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              className="text-gray-300 hover:text-white"
-              onClick={() => navigate('/login')}
-            >
-              Sign In
-            </Button>
-            <Button 
-              className="bg-diablo-600 hover:bg-diablo-700 text-white"
-              onClick={() => navigate('/register')}
-            >
-              Register
-            </Button>
+            {user ? (
+              <>
+                <span className="text-gray-300">Welcome, {user.email}</span>
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-300 hover:text-white"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-300 hover:text-white"
+                  onClick={() => navigate('/login')}
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  className="bg-diablo-600 hover:bg-diablo-700 text-white"
+                  onClick={() => navigate('/register')}
+                >
+                  Register
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
