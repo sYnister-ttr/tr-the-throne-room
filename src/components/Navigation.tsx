@@ -5,11 +5,36 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "./ui/use-toast";
+import { useEffect, useState } from "react";
 
 const Navigation = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [username, setUsername] = useState<string>("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+        
+        if (data) {
+          setUsername(data.username);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -54,7 +79,7 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-gray-300">Welcome, {user.email}</span>
+                <span className="text-gray-300">Welcome, {username || 'User'}</span>
                 <Button 
                   variant="ghost" 
                   className="text-gray-300 hover:text-white"

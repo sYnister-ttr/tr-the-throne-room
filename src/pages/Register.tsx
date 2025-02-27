@@ -11,6 +11,7 @@ import HeroSection from "@/components/HeroSection";
 const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,6 +24,11 @@ const Register = () => {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: username,
+          },
+        },
       });
 
       if (error) throw error;
@@ -55,6 +61,16 @@ const Register = () => {
             </div>
             <form onSubmit={handleRegister} className="mt-8 space-y-6">
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Choose a username"
+                    required
+                  />
+                </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
