@@ -17,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Test the connection without try/catch to see any errors more clearly
+// Test the connection using Promise.then() properly
 supabase.from('items').select('count', { count: 'exact', head: true })
   .then(({ count, error }) => {
     if (error) {
@@ -26,6 +26,6 @@ supabase.from('items').select('count', { count: 'exact', head: true })
       console.log('Supabase connection successful, items count:', count);
     }
   })
-  .catch(err => {
+  .catch((err: Error) => {
     console.error('Exception testing Supabase connection:', err);
   });
