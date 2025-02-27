@@ -18,7 +18,7 @@ interface PriceCheck {
 }
 
 const FeaturedTrades = () => {
-  const { data: trades = [] } = useQuery({
+  const { data: trades = [], isLoading: tradesLoading } = useQuery({
     queryKey: ['featured-trades'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -36,7 +36,7 @@ const FeaturedTrades = () => {
     },
   });
 
-  const { data: priceChecks = [] } = useQuery({
+  const { data: priceChecks = [], isLoading: priceChecksLoading } = useQuery({
     queryKey: ['featured-price-checks'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -53,59 +53,71 @@ const FeaturedTrades = () => {
     },
   });
 
+  if (tradesLoading || priceChecksLoading) {
+    return <div>Loading featured content...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-white mb-4">Recent Trades</h2>
         <div className="grid gap-4">
-          {trades.map((trade) => (
-            <Link 
-              key={trade.id} 
-              to={`/market/trade/${trade.id}`}
-              className="block p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-white">{trade.title}</h3>
-                  <p className="text-sm text-gray-400">
-                    Posted {formatDistanceToNow(new Date(trade.created_at))} ago by{" "}
-                    {trade.profiles?.username}
-                  </p>
+          {trades.length === 0 ? (
+            <p className="text-gray-400">No trades available</p>
+          ) : (
+            trades.map((trade) => (
+              <Link 
+                key={trade.id} 
+                to={`/market/trade/${trade.id}`}
+                className="block p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-white">{trade.title}</h3>
+                    <p className="text-sm text-gray-400">
+                      Posted {formatDistanceToNow(new Date(trade.created_at))} ago by{" "}
+                      {trade.profiles?.username}
+                    </p>
+                  </div>
+                  <span className="px-2 py-1 bg-diablo-600 text-white text-sm rounded">
+                    {trade.payment_type === 'currency' 
+                      ? `${trade.price} FG` 
+                      : 'Item Trade'}
+                  </span>
                 </div>
-                <span className="px-2 py-1 bg-diablo-600 text-white text-sm rounded">
-                  {trade.payment_type === 'currency' 
-                    ? `${trade.price} FG` 
-                    : 'Item Trade'}
-                </span>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-bold text-white mb-4">Recent Price Checks</h2>
         <div className="grid gap-4">
-          {priceChecks.map((check) => (
-            <Link 
-              key={check.id} 
-              to={`/market/price-check/${check.id}`}
-              className="block p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-white">{check.item_name}</h3>
-                  <p className="text-sm text-gray-400">
-                    Posted {formatDistanceToNow(new Date(check.created_at))} ago by{" "}
-                    {check.profiles?.username}
-                  </p>
+          {priceChecks.length === 0 ? (
+            <p className="text-gray-400">No price checks available</p>
+          ) : (
+            priceChecks.map((check) => (
+              <Link 
+                key={check.id} 
+                to={`/price-check/${check.id}`}
+                className="block p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-white">{check.item_name}</h3>
+                    <p className="text-sm text-gray-400">
+                      Posted {formatDistanceToNow(new Date(check.created_at))} ago by{" "}
+                      {check.profiles?.username}
+                    </p>
+                  </div>
+                  <span className="px-2 py-1 bg-diablo-600 text-white text-sm rounded">
+                    {check.responses_count} {check.responses_count === 1 ? 'response' : 'responses'}
+                  </span>
                 </div>
-                <span className="px-2 py-1 bg-diablo-600 text-white text-sm rounded">
-                  {check.responses_count} {check.responses_count === 1 ? 'response' : 'responses'}
-                </span>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -99,7 +99,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/market/price-check/${check.id}`)}
+              onClick={() => navigate(`/price-check/${check.id}`)}
             >
               View Details
             </Button>

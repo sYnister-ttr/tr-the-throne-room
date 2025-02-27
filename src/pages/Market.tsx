@@ -72,7 +72,7 @@ const Market = () => {
                   List Item
                 </Button>
                 <Button
-                  onClick={() => navigate("/market/price-check")}
+                  onClick={() => navigate("/price-check")}
                   variant="outline"
                 >
                   Price Check
