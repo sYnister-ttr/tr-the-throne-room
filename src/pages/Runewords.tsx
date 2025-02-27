@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Runeword, GameType } from "@/types/items";
@@ -10,33 +10,79 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 const Runewords = () => {
   const [gameFilter, setGameFilter] = useState<GameType>("diablo2_resurrected");
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
   const [baseTypeFilter, setBaseTypeFilter] = useState<string>("");
+  const [manualFetch, setManualFetch] = useState(false);
   const { toast } = useToast();
 
-  // Simplified query without authentication dependencies
+  // Separate function for direct Supabase testing
+  const testDirectFetch = async () => {
+    try {
+      toast({
+        title: "Testing connection...",
+        description: "Attempting direct database connection",
+      });
+      
+      console.log("Starting direct Supabase test...");
+      const { data, error } = await supabase
+        .from("runewords")
+        .select("id, name")
+        .limit(3);
+      
+      if (error) {
+        console.error("Direct Supabase test failed:", error);
+        toast({
+          variant: "destructive",
+          title: "Database Error",
+          description: `Connection failed: ${error.message}`,
+        });
+        return false;
+      }
+      
+      console.log("Direct Supabase test succeeded:", data);
+      toast({
+        title: "Connection Successful",
+        description: `Found ${data.length} records`,
+      });
+      
+      // Force a refresh of the main query
+      setManualFetch(prev => !prev);
+      return true;
+    } catch (err) {
+      console.error("Unexpected error during direct test:", err);
+      toast({
+        variant: "destructive",
+        title: "Unexpected Error",
+        description: `Error: ${err instanceof Error ? err.message : String(err)}`,
+      });
+      return false;
+    }
+  };
+
+  // Main query for runewords
   const { 
     data: runewords = [], 
     isLoading, 
     error, 
     refetch 
   } = useQuery({
-    queryKey: ["runewords", gameFilter, searchTerm, levelFilter, baseTypeFilter],
+    queryKey: ["runewords", gameFilter, searchTerm, levelFilter, baseTypeFilter, manualFetch],
     queryFn: async () => {
+      console.log("Attempting to fetch runewords with filters:", { 
+        gameFilter, searchTerm, levelFilter, baseTypeFilter 
+      });
+      
       try {
-        console.log("Fetching runewords with filters:", { 
-          gameFilter, searchTerm, levelFilter, baseTypeFilter 
-        });
-        
+        console.log("Building Supabase query...");
         let query = supabase
           .from("runewords")
           .select("*");
-        
+          
+        // Only apply game filter if one is selected
         if (gameFilter) {
           query = query.eq("game", gameFilter);
         }
@@ -53,59 +99,24 @@ const Runewords = () => {
           query = query.contains("base_types", [baseTypeFilter]);
         }
         
+        console.log("Executing Supabase query...");
         const { data, error } = await query.order("name");
         
         if (error) {
-          console.error("Supabase query error:", error);
+          console.error("Error fetching runewords:", error);
           throw error;
         }
         
+        console.log("Successfully fetched runewords:", data?.length || 0);
         return data as Runeword[];
-      } catch (error) {
-        console.error("Error fetching runewords:", error);
-        throw error;
+      } catch (err) {
+        console.error("Error in queryFn:", err);
+        throw err;
       }
     },
-    retry: 1,
+    retry: 2,
     staleTime: 60000,
   });
-
-  const handleTestConnection = async () => {
-    try {
-      toast({
-        title: "Testing connection...",
-        description: "Attempting to connect to the database",
-      });
-      
-      const { data, error } = await supabase
-        .from("runewords")
-        .select("id, name")
-        .limit(3);
-      
-      if (error) {
-        console.error("Test connection error:", error);
-        toast({
-          variant: "destructive",
-          title: "Connection Failed",
-          description: error.message,
-        });
-        return;
-      }
-      
-      toast({
-        title: "Connection Successful",
-        description: `Found ${data.length} records`,
-      });
-      
-      refetch();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: error.message || "An unexpected error occurred",
-      });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,7 +124,7 @@ const Runewords = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
-          <Button onClick={handleTestConnection} variant="outline">
+          <Button onClick={testDirectFetch} variant="outline">
             Test Connection
           </Button>
         </div>
@@ -194,28 +205,37 @@ const Runewords = () => {
                 <pre className="text-left bg-black/30 p-4 rounded max-w-full mx-auto overflow-auto text-xs text-red-300 mb-4">
                   {error instanceof Error ? error.message : String(error)}
                 </pre>
-                <div className="flex justify-center gap-2">
-                  <Button 
-                    onClick={() => refetch()}
-                    variant="destructive"
-                  >
-                    Retry
-                  </Button>
-                  <Button 
-                    onClick={handleTestConnection}
-                    variant="outline"
-                  >
-                    Test Connection
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => refetch()}
+                  variant="destructive"
+                  className="mr-2"
+                >
+                  Retry
+                </Button>
+                <Button 
+                  onClick={testDirectFetch}
+                  variant="outline"
+                >
+                  Test Connection
+                </Button>
               </div>
             ) : isLoading ? (
               <div className="text-center py-12 bg-gray-800/20 rounded-lg border border-gray-700">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-diablo-500" />
+                <div className="animate-pulse mb-4">
+                  <div className="h-4 bg-gray-700 rounded w-3/4 mx-auto mb-2"></div>
+                  <div className="h-4 bg-gray-700 rounded w-1/2 mx-auto"></div>
+                </div>
                 <p className="text-gray-300 mb-2">Loading runewords...</p>
                 <p className="text-gray-500 text-sm">
                   Connecting to Supabase and fetching data...
                 </p>
+                <Button 
+                  onClick={testDirectFetch}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Test Connection
+                </Button>
               </div>
             ) : runewords.length === 0 ? (
               <div className="text-center py-12 bg-gray-800/20 rounded-lg border border-gray-700">

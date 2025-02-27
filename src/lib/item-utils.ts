@@ -1,8 +1,10 @@
 
-export const getRarityColor = (rarity: string): string => {
-  switch (rarity?.toLowerCase()) {
+import { ItemCategory, ItemRarity } from "@/types/items";
+
+export function getRarityColor(rarity: ItemRarity): string {
+  switch (rarity) {
     case 'normal':
-      return 'zinc-200';
+      return 'gray-200';
     case 'magic':
       return 'blue-400';
     case 'rare':
@@ -10,35 +12,35 @@ export const getRarityColor = (rarity: string): string => {
     case 'unique':
       return 'amber-500';
     case 'set':
-      return 'green-500';
+      return 'green-400';
     case 'legendary':
-      return 'orange-500';
+      return 'orange-400';
     case 'mythic':
-      return 'purple-500';
+      return 'purple-400';
     default:
-      return 'zinc-200';
+      return 'white';
   }
-};
+}
 
-export const getCategoryColor = (category: string): string => {
-  switch (category?.toLowerCase()) {
+export function getCategoryColor(category: ItemCategory): string {
+  switch (category) {
     case 'weapon':
-      return 'red-500';
+      return 'red-600';
     case 'armor':
-      return 'blue-500';
+      return 'blue-600';
     case 'jewelry':
-      return 'yellow-500';
+      return 'purple-600';
     case 'charm':
-      return 'green-500';
+      return 'green-600';
     case 'rune':
-      return 'amber-500';
+      return 'yellow-600';
     case 'consumable':
-      return 'cyan-500';
+      return 'pink-600';
     case 'material':
-      return 'purple-500';
+      return 'orange-600';
     case 'unique':
-      return 'orange-500';
+      return 'amber-600';
     default:
-      return 'zinc-500';
+      return 'gray-600';
   }
-};
+}

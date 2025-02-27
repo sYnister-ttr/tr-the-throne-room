@@ -33,12 +33,6 @@ export interface TradeOffer {
   status: string;
   created_at: string;
   updated_at: string;
-  price_offered?: number | null;
-  items_offered?: string | null;
-  payment_type?: 'currency' | 'items';
-  profiles?: {
-    username: string;
-  };
 }
 
 export interface PriceCheck {
@@ -52,7 +46,4 @@ export interface PriceCheck {
   responses_count: number;
   created_at: string;
   updated_at: string;
-  profiles?: {
-    username: string;
-  };
 }

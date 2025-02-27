@@ -1,23 +1,15 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, UserCircle, LogOut } from "lucide-react";
+import { Menu, X, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/hooks/useAuth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { user, signOut, isAdmin, isModerator } = useAuth();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -26,7 +18,6 @@ const Navigation = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
-    setIsOpen(false);
   };
 
   return (
@@ -71,8 +62,9 @@ const Navigation = () => {
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="text-diablo-500 hover:text-diablo-400 px-3 py-2 rounded-md text-sm font-medium"
+                    className="text-diablo-500 hover:text-diablo-400 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
+                    <Shield className="mr-1 h-4 w-4" />
                     Admin
                   </Link>
                 )}
@@ -82,30 +74,22 @@ const Navigation = () => {
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
               {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <UserCircle className="h-6 w-6 text-diablo-500" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/profile")}>
-                      Profile
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                      <DropdownMenuItem onClick={() => navigate("/admin")}>
-                        Admin Panel
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Sign Out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-4">
+                  <Link
+                    to="/profile"
+                    className="text-gray-300 hover:text-white flex items-center"
+                  >
+                    <User className="h-5 w-5 mr-1" />
+                    <span>Profile</span>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
+                    onClick={handleSignOut}
+                  >
+                    Sign Out
+                  </Button>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <Button
@@ -176,9 +160,10 @@ const Navigation = () => {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="text-diablo-500 hover:text-diablo-400 block px-3 py-2 rounded-md text-base font-medium"
+                className="text-diablo-500 hover:text-diablo-400 block px-3 py-2 rounded-md text-base font-medium flex items-center"
                 onClick={toggleMenu}
               >
+                <Shield className="mr-1 h-4 w-4" />
                 Admin
               </Link>
             )}
@@ -186,62 +171,50 @@ const Navigation = () => {
           <Separator />
           <div className="pt-4 pb-3 border-gray-800">
             <div className="flex items-center px-5">
-              <div className="flex flex-col w-full gap-2">
-                {user ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
-                      onClick={() => {
-                        navigate("/profile");
-                        toggleMenu();
-                      }}
-                    >
-                      Profile
-                    </Button>
-                    {isAdmin && (
-                      <Button
-                        variant="outline"
-                        className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
-                        onClick={() => {
-                          navigate("/admin");
-                          toggleMenu();
-                        }}
-                      >
-                        Admin Panel
-                      </Button>
-                    )}
-                    <Button
-                      className="bg-diablo-500 hover:bg-diablo-700 w-full"
-                      onClick={handleSignOut}
-                    >
-                      Sign Out
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
-                      onClick={() => {
-                        navigate("/login");
-                        toggleMenu();
-                      }}
-                    >
-                      Sign In
-                    </Button>
-                    <Button
-                      className="bg-diablo-500 hover:bg-diablo-700 w-full"
-                      onClick={() => {
-                        navigate("/register");
-                        toggleMenu();
-                      }}
-                    >
-                      Sign Up
-                    </Button>
-                  </>
-                )}
-              </div>
+              {user ? (
+                <div className="flex flex-col w-full gap-2">
+                  <Link
+                    to="/profile"
+                    className="text-gray-300 hover:text-white flex items-center px-3 py-2"
+                    onClick={toggleMenu}
+                  >
+                    <User className="h-5 w-5 mr-1" />
+                    <span>Profile</span>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
+                    onClick={() => {
+                      handleSignOut();
+                      toggleMenu();
+                    }}
+                  >
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col w-full gap-2">
+                  <Button
+                    variant="outline"
+                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
+                    onClick={() => {
+                      navigate("/login");
+                      toggleMenu();
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    className="bg-diablo-500 hover:bg-diablo-700 w-full"
+                    onClick={() => {
+                      navigate("/register");
+                      toggleMenu();
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

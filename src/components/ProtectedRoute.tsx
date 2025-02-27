@@ -1,61 +1,41 @@
 
-import { ReactNode, useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
-  requireAdmin?: boolean;
+  children: React.ReactNode;
 }
 
-const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin } = useAuth();
-  const { toast } = useToast();
-  const location = useLocation();
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  // Add debug logs
-  console.log("ProtectedRoute - Loading:", loading);
-  console.log("ProtectedRoute - User:", user);
-  console.log("ProtectedRoute - IsAdmin:", isAdmin);
-  console.log("ProtectedRoute - RequireAdmin:", requireAdmin);
-
+  // Log the authentication state for debugging
   useEffect(() => {
+    console.log("ProtectedRoute - Auth State:", { user: user?.id, loading });
+    
+    // If loading is done and there's no user, redirect to login
     if (!loading && !user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to access this page.",
-        variant: "destructive",
-      });
-    } else if (!loading && requireAdmin && !isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access this page.",
-        variant: "destructive",
-      });
+      console.log("ProtectedRoute - Redirecting to login");
+      navigate("/login");
     }
-  }, [loading, user, isAdmin, requireAdmin, toast]);
+  }, [user, loading, navigate]);
 
-  // If still loading, show loading spinner
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-diablo-500"></div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl text-gray-400">Loading authentication...</div>
       </div>
     );
   }
 
-  // If no user, redirect to login
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    console.log("ProtectedRoute - No user, redirecting to login");
+    return <Navigate to="/login" />;
   }
 
-  // If admin required but user is not admin, redirect to home
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
-  // If all checks pass, render the protected content
+  console.log("ProtectedRoute - User authenticated, rendering children");
   return <>{children}</>;
 };
 
