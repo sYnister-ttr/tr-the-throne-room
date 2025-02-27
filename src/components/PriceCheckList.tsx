@@ -37,7 +37,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
         .from("price_checks")
         .select(`
           *,
-          profiles!price_checks_user_id_fkey (
+          profiles (
             username
           )
         `)

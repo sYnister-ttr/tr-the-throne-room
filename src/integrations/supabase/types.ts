@@ -15,6 +15,8 @@ export type Database = {
           created_at: string
           estimated_price: number | null
           id: string
+          items_offered: string | null
+          payment_type: string
           price_check_id: string
           user_id: string
         }
@@ -23,6 +25,8 @@ export type Database = {
           created_at?: string
           estimated_price?: number | null
           id?: string
+          items_offered?: string | null
+          payment_type?: string
           price_check_id: string
           user_id: string
         }
@@ -31,6 +35,8 @@ export type Database = {
           created_at?: string
           estimated_price?: number | null
           id?: string
+          items_offered?: string | null
+          payment_type?: string
           price_check_id?: string
           user_id?: string
         }

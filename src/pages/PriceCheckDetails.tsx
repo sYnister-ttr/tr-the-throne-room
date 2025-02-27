@@ -10,11 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatDistanceToNow } from "date-fns";
 
 interface PriceCheckResponse {
   id: string;
-  estimated_price: number;
+  estimated_price: number | null;
+  items_offered: string | null;
+  payment_type: 'currency' | 'items';
   comment: string;
   created_at: string;
   profiles: {
@@ -28,7 +31,9 @@ const PriceCheckDetails = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [estimatedPrice, setEstimatedPrice] = useState("");
+  const [itemsOffered, setItemsOffered] = useState("");
   const [comment, setComment] = useState("");
+  const [paymentType, setPaymentType] = useState<'currency' | 'items'>('currency');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: priceCheck, refetch } = useQuery({
@@ -38,7 +43,7 @@ const PriceCheckDetails = () => {
         .from('price_checks')
         .select(`
           *,
-          profiles (username)
+          profiles!price_checks_user_id_fkey (username)
         `)
         .eq('id', id)
         .single();
@@ -55,7 +60,7 @@ const PriceCheckDetails = () => {
         .from('price_check_responses')
         .select(`
           *,
-          profiles (username)
+          profiles!price_check_responses_user_id_fkey (username)
         `)
         .eq('price_check_id', id)
         .order('created_at', { ascending: false });
@@ -76,7 +81,9 @@ const PriceCheckDetails = () => {
         .insert({
           price_check_id: id,
           user_id: user.id,
-          estimated_price: parseFloat(estimatedPrice),
+          payment_type: paymentType,
+          estimated_price: paymentType === 'currency' ? parseFloat(estimatedPrice) : null,
+          items_offered: paymentType === 'items' ? itemsOffered : null,
           comment,
         });
 
@@ -87,6 +94,7 @@ const PriceCheckDetails = () => {
         description: "Your response has been posted!",
       });
       setEstimatedPrice("");
+      setItemsOffered("");
       setComment("");
       refetch();
     } catch (error: any) {
@@ -126,19 +134,50 @@ const PriceCheckDetails = () => {
           {user && (
             <form onSubmit={handleSubmitResponse} className="bg-secondary p-6 rounded-lg space-y-4">
               <h2 className="text-xl font-semibold text-white">Submit Your Estimate</h2>
-              <div>
-                <Label htmlFor="estimatedPrice">Estimated Price (FG)</Label>
-                <Input
-                  id="estimatedPrice"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={estimatedPrice}
-                  onChange={(e) => setEstimatedPrice(e.target.value)}
-                  placeholder="Enter estimated price"
-                  required
-                />
-              </div>
+              
+              <RadioGroup
+                defaultValue="currency"
+                value={paymentType}
+                onValueChange={(value: 'currency' | 'items') => setPaymentType(value)}
+                className="grid grid-cols-2 gap-4 mb-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="currency" id="currency" />
+                  <Label htmlFor="currency">Forum Gold (FG)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="items" id="items" />
+                  <Label htmlFor="items">Items</Label>
+                </div>
+              </RadioGroup>
+
+              {paymentType === 'currency' ? (
+                <div>
+                  <Label htmlFor="estimatedPrice">Estimated Price (FG)</Label>
+                  <Input
+                    id="estimatedPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={estimatedPrice}
+                    onChange={(e) => setEstimatedPrice(e.target.value)}
+                    placeholder="Enter estimated price"
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="itemsOffered">Items Offered</Label>
+                  <Textarea
+                    id="itemsOffered"
+                    value={itemsOffered}
+                    onChange={(e) => setItemsOffered(e.target.value)}
+                    placeholder="List the items you would trade for this..."
+                    required
+                  />
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="comment">Comment</Label>
                 <Textarea
@@ -149,6 +188,7 @@ const PriceCheckDetails = () => {
                   required
                 />
               </div>
+
               <Button
                 type="submit"
                 className="w-full bg-diablo-600 hover:bg-diablo-700"
@@ -169,9 +209,14 @@ const PriceCheckDetails = () => {
                     {formatDistanceToNow(new Date(response.created_at))} ago
                   </p>
                   <span className="px-2 py-1 bg-diablo-600 text-white text-sm rounded">
-                    {response.estimated_price} FG
+                    {response.payment_type === 'currency' 
+                      ? `${response.estimated_price} FG`
+                      : 'Items Offered'}
                   </span>
                 </div>
+                {response.payment_type === 'items' && (
+                  <p className="text-gray-200 mb-2">{response.items_offered}</p>
+                )}
                 <p className="text-gray-200">{response.comment}</p>
               </div>
             ))}
