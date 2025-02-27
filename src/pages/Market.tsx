@@ -30,7 +30,10 @@ const Market = () => {
       
       const { data, error } = await supabase
         .from("trades")
-        .select("*")
+        .select(`
+          *,
+          profiles (username)
+        `)
         .eq("status", "active")
         .order("created_at", { ascending: false });
 

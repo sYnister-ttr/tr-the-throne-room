@@ -20,6 +20,22 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   console.log("ProtectedRoute - IsAdmin:", isAdmin);
   console.log("ProtectedRoute - RequireAdmin:", requireAdmin);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access this page.",
+        variant: "destructive",
+      });
+    } else if (!loading && requireAdmin && !isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access this page.",
+        variant: "destructive",
+      });
+    }
+  }, [loading, user, isAdmin, requireAdmin, toast]);
+
   // If still loading, show loading spinner
   if (loading) {
     return (
@@ -31,21 +47,11 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
 
   // If no user, redirect to login
   if (!user) {
-    toast({
-      title: "Authentication Required",
-      description: "Please sign in to access this page.",
-      variant: "destructive",
-    });
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // If admin required but user is not admin, redirect to home
   if (requireAdmin && !isAdmin) {
-    toast({
-      title: "Access Denied",
-      description: "You don't have permission to access this page.",
-      variant: "destructive",
-    });
     return <Navigate to="/" replace />;
   }
 
