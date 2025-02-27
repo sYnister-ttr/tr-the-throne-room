@@ -27,6 +27,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("PriceCheckList received userId:", userId);
     fetchPriceChecks();
   }, [userId]);
 
@@ -45,6 +46,9 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
 
       if (userId) {
         query = query.eq("user_id", userId);
+      } else {
+        // If no userId is provided, just limit the results
+        query = query.limit(5);
       }
 
       const { data, error } = await query;
@@ -69,11 +73,23 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   };
 
   if (loading) {
-    return <div>Loading price checks...</div>;
+    return <div className="text-gray-400">Loading price checks...</div>;
   }
 
   if (priceChecks.length === 0) {
-    return <div className="text-gray-400">No price checks found.</div>;
+    return (
+      <div className="text-center py-4">
+        <p className="text-gray-400 mb-4">No price checks found.</p>
+        {userId && (
+          <Button 
+            onClick={() => navigate("/price-check")}
+            className="bg-diablo-600 hover:bg-diablo-700"
+          >
+            Create a Price Check
+          </Button>
+        )}
+      </div>
+    );
   }
 
   return (
