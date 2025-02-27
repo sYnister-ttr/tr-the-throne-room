@@ -1,7 +1,5 @@
 
-import { ItemCategory, ItemRarity } from "@/types/items";
-
-export function getRarityColor(rarity: ItemRarity): string {
+export const getRarityColor = (rarity: string): string => {
   switch (rarity) {
     case 'normal':
       return 'gray-200';
@@ -12,35 +10,35 @@ export function getRarityColor(rarity: ItemRarity): string {
     case 'unique':
       return 'amber-500';
     case 'set':
-      return 'green-400';
+      return 'green-500';
     case 'legendary':
-      return 'orange-400';
+      return 'orange-500';
     case 'mythic':
-      return 'purple-400';
+      return 'purple-500';
     default:
-      return 'white';
+      return 'gray-200';
   }
-}
+};
 
-export function getCategoryColor(category: ItemCategory): string {
+export const getCategoryColor = (category: string): string => {
   switch (category) {
     case 'weapon':
-      return 'red-600';
+      return 'red-500';
     case 'armor':
-      return 'blue-600';
+      return 'blue-500';
     case 'jewelry':
-      return 'purple-600';
+      return 'yellow-500';
     case 'charm':
-      return 'green-600';
+      return 'green-500';
     case 'rune':
-      return 'yellow-600';
+      return 'amber-500';
     case 'consumable':
-      return 'pink-600';
+      return 'cyan-500';
     case 'material':
-      return 'orange-600';
+      return 'purple-500';
     case 'unique':
-      return 'amber-600';
+      return 'orange-500';
     default:
-      return 'gray-600';
+      return 'gray-500';
   }
-}
+};

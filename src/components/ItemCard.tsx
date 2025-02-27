@@ -16,17 +16,21 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item }: ItemCardProps) => {
+  // Safely get colors with fallbacks
+  const rarityColor = getRarityColor(item.rarity);
+  const categoryColor = getCategoryColor(item.category);
+
   return (
-    <Card className={`border border-${getRarityColor(item.rarity)} hover:shadow-md hover:shadow-${getRarityColor(item.rarity)}/20 transition-all`}>
+    <Card className={`border border-${rarityColor} hover:shadow-md transition-all`}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className={`text-${getRarityColor(item.rarity)}`}>{item.name}</CardTitle>
+            <CardTitle className={`text-${rarityColor}`}>{item.name}</CardTitle>
             <CardDescription className="text-sm capitalize">
               {item.base_type || item.category}
             </CardDescription>
           </div>
-          <Badge className={`bg-${getCategoryColor(item.category)} hover:bg-${getCategoryColor(item.category)}`}>
+          <Badge className={`bg-${categoryColor}`}>
             {item.category}
           </Badge>
         </div>
@@ -47,9 +51,13 @@ const ItemCard = ({ item }: ItemCardProps) => {
             <p>Required Level: {item.required_level}</p>
           )}
           
-          {item.stats && item.stats.map((stat, index) => (
+          {item.stats && item.stats.length > 0 && item.stats.map((stat, index) => (
             <p key={index} className="text-gray-300">{stat}</p>
           ))}
+          
+          {(!item.stats || item.stats.length === 0) && item.description && (
+            <p className="text-gray-300">{item.description}</p>
+          )}
         </div>
       </CardContent>
       <CardFooter className="text-xs text-gray-400 pt-2">
