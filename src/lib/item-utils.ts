@@ -1,8 +1,8 @@
 
 export const getRarityColor = (rarity: string): string => {
-  switch (rarity) {
+  switch (rarity?.toLowerCase()) {
     case 'normal':
-      return 'gray-200';
+      return 'zinc-200';
     case 'magic':
       return 'blue-400';
     case 'rare':
@@ -16,12 +16,12 @@ export const getRarityColor = (rarity: string): string => {
     case 'mythic':
       return 'purple-500';
     default:
-      return 'gray-200';
+      return 'zinc-200';
   }
 };
 
 export const getCategoryColor = (category: string): string => {
-  switch (category) {
+  switch (category?.toLowerCase()) {
     case 'weapon':
       return 'red-500';
     case 'armor':
@@ -39,6 +39,6 @@ export const getCategoryColor = (category: string): string => {
     case 'unique':
       return 'orange-500';
     default:
-      return 'gray-500';
+      return 'zinc-500';
   }
 };

@@ -16,21 +16,34 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item }: ItemCardProps) => {
-  // Safely get colors with fallbacks
+  // Get color classes
   const rarityColor = getRarityColor(item.rarity);
   const categoryColor = getCategoryColor(item.category);
 
+  // Convert dynamic class names to inline styles
+  const getBorderStyle = () => {
+    return { borderColor: `var(--${rarityColor.replace('-', '-')})` };
+  };
+  
+  const getTitleStyle = () => {
+    return { color: `var(--${rarityColor.replace('-', '-')})` };
+  };
+  
+  const getBadgeStyle = () => {
+    return { backgroundColor: `var(--${categoryColor.replace('-', '-')})` };
+  };
+
   return (
-    <Card className={`border border-${rarityColor} hover:shadow-md transition-all`}>
+    <Card className="border hover:shadow-md transition-all" style={getBorderStyle()}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className={`text-${rarityColor}`}>{item.name}</CardTitle>
+            <CardTitle style={getTitleStyle()}>{item.name}</CardTitle>
             <CardDescription className="text-sm capitalize">
               {item.base_type || item.category}
             </CardDescription>
           </div>
-          <Badge className={`bg-${categoryColor}`}>
+          <Badge style={getBadgeStyle()}>
             {item.category}
           </Badge>
         </div>
