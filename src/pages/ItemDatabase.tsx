@@ -67,15 +67,16 @@ const ItemDatabase = () => {
     },
   });
 
-  // Fetch item suggestions as user types
+  // Fetch item suggestions as user types - now fetching all required fields
   const { data: suggestionItems = [], isLoading: isSuggestionsLoading } = useQuery({
     queryKey: ["itemSuggestions", searchTerm, filters.game],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 1) return [];
 
+      // Get all fields needed for the Item type
       const { data, error } = await supabase
         .from("items")
-        .select("id, name, category, rarity, game")
+        .select("*") // Get all fields instead of just a subset
         .eq("game", filters.game)
         .ilike("name", `%${searchTerm}%`)
         .order("name")
