@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Initialize Supabase client with proper options
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabase_url, supabase_anon_key, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -25,3 +25,17 @@ supabase.auth.getSession().then(({ data, error }) => {
     console.log("Supabase initialized with session:", data.session ? "Active" : "None");
   }
 });
+
+// Add a global error handler for Supabase requests
+supabase.handleError = (error: any) => {
+  console.error("Supabase error:", error);
+  
+  // Check for specific error types
+  if (error.message?.includes('JWT')) {
+    console.error("JWT error - session may be invalid");
+  }
+  if (error.code === 'PGRST301') {
+    console.error("Database connection error");
+  }
+};
+
