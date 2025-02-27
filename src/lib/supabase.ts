@@ -17,15 +17,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Test the connection
-supabase.from('items').select('count', { count: 'exact', head: true })
-  .then(({ count, error }) => {
-    if (error) {
-      console.error('Supabase connection test failed:', error);
-    } else {
-      console.log('Supabase connection successful, items count:', count);
-    }
-  })
-  .catch(err => {
-    console.error('Exception testing Supabase connection:', err);
-  });
+// Test the connection - use Promise.catch instead of method chaining
+try {
+  supabase.from('items').select('count', { count: 'exact', head: true })
+    .then(({ count, error }) => {
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+      } else {
+        console.log('Supabase connection successful, items count:', count);
+      }
+    });
+} catch (err) {
+  console.error('Exception testing Supabase connection:', err);
+}
