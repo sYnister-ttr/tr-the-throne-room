@@ -37,6 +37,7 @@ const CreateTrade = () => {
   }, [game]);
 
   const handleItemSelect = (itemName: string, customProperties?: string) => {
+    console.log("Selected item:", itemName, "Properties:", customProperties);
     setSelectedItem(itemName);
     setTitle(`Selling ${itemName}`);
     if (customProperties) {
@@ -46,11 +47,34 @@ const CreateTrade = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to create a trade.",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("trades").insert({
-        user_id: user?.id,
+      console.log("Creating trade with data:", {
+        user_id: user.id,
+        title,
+        description,
+        game,
+        platform,
+        game_mode: gameMode,
+        ladder_status: ladderStatus,
+        price: paymentType === 'currency' && price ? parseFloat(price) : null,
+        payment_type: paymentType,
+        payment_items: paymentType === 'items' ? paymentItems : null,
+      });
+      
+      const { data, error } = await supabase.from("trades").insert({
+        user_id: user.id,
         title,
         description,
         game,
@@ -61,10 +85,15 @@ const CreateTrade = () => {
         payment_type: paymentType,
         payment_items: paymentType === 'items' ? paymentItems : null,
         status: "active",
-      });
+      }).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating trade:", error);
+        throw error;
+      }
 
+      console.log("Trade created successfully:", data);
+      
       toast({
         title: "Success",
         description: "Your trade has been listed!",
@@ -75,7 +104,7 @@ const CreateTrade = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create trade",
       });
     } finally {
       setLoading(false);

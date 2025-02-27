@@ -44,6 +44,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
   // Reset search and properties when game changes
   useEffect(() => {
+    console.log("Game type changed to:", gameType);
     setSearchTerm("");
     setCustomProperties("");
     setSelectedItemType("");
@@ -352,6 +353,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     e.preventDefault(); // Prevent form submission
     
     if (newPropertyName.trim()) {
+      console.log("Adding property:", newPropertyName, newPropertyValue);
       setItemProperties([...itemProperties, { 
         name: newPropertyName, 
         value: newPropertyValue 
@@ -396,6 +398,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
       propertyText += '\n' + customProperties;
     }
     
+    console.log("Submitting properties:", propertyText);
     onItemSelect(searchTerm, propertyText);
   };
 
