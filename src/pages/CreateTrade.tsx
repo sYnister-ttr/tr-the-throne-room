@@ -36,12 +36,13 @@ const CreateTrade = () => {
     setSelectedItem(""); // Reset selected item when game changes
   }, [game]);
 
-  // Set title based on selected item
-  useEffect(() => {
-    if (selectedItem) {
-      setTitle(`Selling ${selectedItem}`);
+  const handleItemSelect = (itemName: string, customProperties?: string) => {
+    setSelectedItem(itemName);
+    setTitle(`Selling ${itemName}`);
+    if (customProperties) {
+      setDescription(customProperties);
     }
-  }, [selectedItem]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +93,7 @@ const CreateTrade = () => {
               <Label>Select Item</Label>
               <ItemSelection 
                 gameType={game}
-                onItemSelect={setSelectedItem}
+                onItemSelect={handleItemSelect}
                 selectedItem={selectedItem}
               />
             </div>

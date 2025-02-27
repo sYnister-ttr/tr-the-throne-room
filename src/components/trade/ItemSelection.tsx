@@ -6,68 +6,102 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GameType, Item } from "@/types/items";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { GameType, Item, Runeword } from "@/types/items";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ItemSelectionProps {
   gameType: GameType;
-  onItemSelect: (itemName: string) => void;
+  onItemSelect: (itemName: string, customProperties?: string) => void;
   selectedItem: string;
 }
 
 const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
+  const [customProperties, setCustomProperties] = useState("");
+  const [selectedItemType, setSelectedItemType] = useState<string>("");
 
-  // Reset search when game changes
+  // Reset search and custom properties when game changes
   useEffect(() => {
     setSearchTerm("");
+    setCustomProperties("");
+    setSelectedItemType("");
   }, [gameType]);
 
-  // Fetch items for the selected game
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["items-selection", gameType, searchTerm],
+  // Fetch items and runewords for the selected game
+  const { data: searchResults = [], isLoading } = useQuery({
+    queryKey: ["items-runewords-search", gameType, searchTerm],
     queryFn: async () => {
-      console.log("Fetching items for game:", gameType);
+      console.log("Fetching items and runewords for game:", gameType);
       
       try {
-        let query = supabase
+        // Fetch items
+        const { data: items = [], error: itemsError } = await supabase
           .from("items")
           .select("*")
-          .eq("game", gameType);
-        
-        if (searchTerm && searchTerm.trim() !== "") {
-          query = query.ilike("name", `%${searchTerm}%`);
-        }
+          .eq("game", gameType)
+          .ilike("name", `%${searchTerm}%`)
+          .limit(20);
+          
+        if (itemsError) throw itemsError;
 
-        const { data, error } = await query.order("name").limit(20);
-        
-        if (error) {
-          console.error("Error fetching items:", error);
-          return [];
-        }
-        
-        console.log("Items fetched:", data?.length || 0, data);
-        return data as Item[];
+        // Fetch runewords
+        const { data: runewords = [], error: runewordsError } = await supabase
+          .from("runewords")
+          .select("*")
+          .eq("game", gameType)
+          .ilike("name", `%${searchTerm}%`)
+          .limit(20);
+          
+        if (runewordsError) throw runewordsError;
+
+        // Combine and format results
+        const formattedItems = items.map((item: Item) => ({
+          ...item,
+          itemType: item.rarity === 'normal' ? 'base' : item.rarity
+        }));
+
+        const formattedRunewords = runewords.map((runeword: Runeword) => ({
+          id: runeword.id,
+          name: runeword.name,
+          itemType: 'runeword',
+          category: 'runeword',
+          base_types: runeword.base_types
+        }));
+
+        return [...formattedItems, ...formattedRunewords];
       } catch (error) {
         console.error("Exception fetching items:", error);
         return [];
       }
     },
-    // Always fetch some initial items, even without search term
-    enabled: true
+    enabled: searchTerm.length > 0
   });
 
-  const handleItemSelect = (item: Item) => {
-    onItemSelect(item.name);
+  const handleItemSelect = (item: any) => {
+    setSelectedItemType(item.itemType);
+    
+    if (item.itemType === 'base' || item.itemType === 'magic' || item.itemType === 'rare') {
+      // For base, magic, and rare items, show custom properties input
+      setCustomProperties("");
+    } else {
+      // For unique, set, and runeword items, clear custom properties
+      setCustomProperties("");
+      onItemSelect(item.name);
+    }
+    
     setSearchTerm(item.name);
     setOpen(false);
   };
 
-  // Debug render - show items count
-  console.log("Rendering with items:", items?.length || 0);
+  const handleCustomPropertiesSubmit = () => {
+    onItemSelect(searchTerm, customProperties);
+  };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -75,7 +109,6 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between"
-            onClick={() => setOpen(true)}
           >
             {selectedItem || "Select an item..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -91,10 +124,10 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             />
             <CommandList>
               <CommandEmpty>
-                {isLoading ? "Loading..." : "No items found for this game."}
+                {isLoading ? "Loading..." : "No items found."}
               </CommandEmpty>
               <CommandGroup>
-                {items.map((item) => (
+                {searchResults.map((item) => (
                   <CommandItem
                     key={item.id}
                     value={item.name}
@@ -105,10 +138,12 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                         selectedItem === item.name ? "opacity-100" : "opacity-0"
                       }`}
                     />
-                    <span className="mr-2">{item.name}</span>
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {item.category}
-                    </span>
+                    <div>
+                      <span className="mr-2">{item.name}</span>
+                      <span className="text-xs text-muted-foreground capitalize">
+                        {item.itemType}
+                      </span>
+                    </div>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -116,6 +151,32 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
           </Command>
         </PopoverContent>
       </Popover>
+
+      {/* Custom Properties Input for Base/Magic/Rare Items */}
+      {selectedItemType && (selectedItemType === 'base' || selectedItemType === 'magic' || selectedItemType === 'rare') && (
+        <div className="space-y-2">
+          <Label htmlFor="customProperties">
+            Item Properties 
+            <span className="text-sm text-muted-foreground ml-2">
+              (sockets, stats, etc.)
+            </span>
+          </Label>
+          <Textarea
+            id="customProperties"
+            value={customProperties}
+            onChange={(e) => setCustomProperties(e.target.value)}
+            placeholder="Enter item properties (e.g., '4 sockets, 15% Enhanced Defense')"
+            className="min-h-[100px]"
+          />
+          <Button 
+            onClick={handleCustomPropertiesSubmit}
+            className="w-full"
+            disabled={!customProperties.trim()}
+          >
+            Confirm Properties
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
