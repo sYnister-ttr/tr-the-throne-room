@@ -35,7 +35,7 @@ const PriceCheck = () => {
         .insert({
           user_id: user.id,
           item_name: itemName,
-          description,
+          description: description || null, // Make description optional
           game,
           platform,
           game_mode: gameMode,
@@ -80,13 +80,12 @@ const PriceCheck = () => {
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add any relevant details about the item..."
-                required
               />
             </div>
 
