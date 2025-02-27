@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "@/pages/Index";
 import Market from "@/pages/Market";
@@ -18,45 +19,50 @@ import Register from "@/pages/Register";
 import NotFound from "@/pages/NotFound";
 import Admin from "@/pages/Admin";
 
+// Create a client
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/market" element={<Market />} />
-          <Route path="/market/trade/:id" element={<TradeDetails />} />
-          <Route path="/market/create" element={
-            <ProtectedRoute>
-              <CreateTrade />
-            </ProtectedRoute>
-          } />
-          <Route path="/price-check" element={<PriceCheck />} />
-          <Route path="/price-check/:id" element={<PriceCheckDetails />} />
-          <Route path="/items" element={<ItemDatabase />} />
-          <Route path="/runewords" element={<Runewords />} />
-          <Route path="/runewords/add" element={
-            <ProtectedRoute>
-              <AddRuneword />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <Admin />
-            </ProtectedRoute>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-      <Toaster />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/market" element={<Market />} />
+            <Route path="/market/trade/:id" element={<TradeDetails />} />
+            <Route path="/market/create" element={
+              <ProtectedRoute>
+                <CreateTrade />
+              </ProtectedRoute>
+            } />
+            <Route path="/price-check" element={<PriceCheck />} />
+            <Route path="/price-check/:id" element={<PriceCheckDetails />} />
+            <Route path="/items" element={<ItemDatabase />} />
+            <Route path="/runewords" element={<Runewords />} />
+            <Route path="/runewords/add" element={
+              <ProtectedRoute>
+                <AddRuneword />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <Admin />
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+        <Toaster />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
