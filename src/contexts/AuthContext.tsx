@@ -63,76 +63,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUserRole = async () => {
     if (!user) return;
     
-    const role = await fetchUserRole(user.id);
-    if (role) {
-      setUser({ ...user, role: role as UserRole });
-      setIsAdmin(role === 'admin');
-      setIsModerator(role === 'moderator' || role === 'admin');
+    setLoading(true);
+    try {
+      const role = await fetchUserRole(user.id);
+      if (role) {
+        setUser({ ...user, role: role as UserRole });
+        setIsAdmin(role === 'admin');
+        setIsModerator(role === 'moderator' || role === 'admin');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Initial auth state check
-    const checkSession = async () => {
+    let mounted = true;
+    
+    const initAuth = async () => {
       try {
+        setLoading(true);
         console.log("Checking initial auth session...");
-        const { data, error } = await supabase.auth.getSession();
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Failed to get authentication session. Please try logging in again.",
-          });
-          setLoading(false);
+          if (mounted) {
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: "Failed to get authentication session. Please try logging in again.",
+            });
+          }
           return;
         }
         
-        if (data.session?.user) {
-          console.log("Found authenticated user:", data.session.user.id);
-          setSession(data.session);
-          
-          const userWithoutRole = { 
-            ...data.session.user,
-            role: undefined as unknown as UserRole
-          } as UserWithRole;
-          
-          setUser(userWithoutRole);
-          
-          const role = await fetchUserRole(userWithoutRole.id);
-          if (role) {
-            setUser({ ...userWithoutRole, role: role as UserRole });
-            setIsAdmin(role === 'admin');
-            setIsModerator(role === 'moderator' || role === 'admin');
-          }
-        } else {
-          console.log("No authenticated user found");
-          setUser(null);
-          setSession(null);
-          setIsAdmin(false);
-          setIsModerator(false);
-        }
-      } catch (error) {
-        console.error("Exception checking session:", error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "An unexpected error occurred. Please try logging in again.",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkSession();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
-        
-        if (session?.user) {
+        if (session?.user && mounted) {
+          console.log("Found authenticated user:", session.user.id);
           setSession(session);
           
           const userWithoutRole = { 
@@ -143,29 +110,78 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(userWithoutRole);
           
           const role = await fetchUserRole(userWithoutRole.id);
-          if (role) {
+          if (role && mounted) {
             setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
           }
-        } else {
+        } else if (mounted) {
+          console.log("No authenticated user found");
+          setUser(null);
+          setSession(null);
+          setIsAdmin(false);
+          setIsModerator(false);
+        }
+      } catch (error) {
+        console.error("Exception checking session:", error);
+        if (mounted) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "An unexpected error occurred. Please try logging in again.",
+          });
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        
+        if (session?.user && mounted) {
+          setSession(session);
+          
+          const userWithoutRole = { 
+            ...session.user,
+            role: undefined as unknown as UserRole
+          } as UserWithRole;
+          
+          setUser(userWithoutRole);
+          
+          const role = await fetchUserRole(userWithoutRole.id);
+          if (role && mounted) {
+            setUser({ ...userWithoutRole, role: role as UserRole });
+            setIsAdmin(role === 'admin');
+            setIsModerator(role === 'moderator' || role === 'admin');
+          }
+        } else if (mounted) {
           setUser(null);
           setSession(null);
           setIsAdmin(false);
           setIsModerator(false);
         }
         
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [toast]);
 
   const signOut = async () => {
     try {
+      setLoading(true);
       console.log("Signing out user");
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -192,6 +208,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Error",
         description: "An unexpected error occurred while signing out",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
