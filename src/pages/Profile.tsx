@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import UserTrades from "@/components/UserTrades";
+import PriceCheckList from "@/components/PriceCheckList";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -98,6 +99,11 @@ const Profile = () => {
           <div className="bg-card p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold text-white mb-6">Your Listings</h2>
             <UserTrades />
+          </div>
+
+          <div className="bg-card p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-white mb-6">Your Price Checks</h2>
+            <PriceCheckList userId={user?.id} />
           </div>
         </div>
       </div>

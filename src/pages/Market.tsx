@@ -9,6 +9,7 @@ import { Trade } from "@/types/trading";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import TradeCard from "@/components/TradeCard";
+import PriceCheckList from "@/components/PriceCheckList";
 
 const Market = () => {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -58,36 +59,45 @@ const Market = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 pt-24">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Market</h1>
-          <div className="flex gap-4">
-            <Button
-              onClick={() => navigate("/market/create")}
-              className="bg-diablo-600 hover:bg-diablo-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              List Item
-            </Button>
-            <Button
-              onClick={() => navigate("/market/price-check")}
-              variant="outline"
-            >
-              Price Check
-            </Button>
+        <div className="space-y-12">
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-bold text-white">Market</h1>
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => navigate("/market/create")}
+                  className="bg-diablo-600 hover:bg-diablo-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  List Item
+                </Button>
+                <Button
+                  onClick={() => navigate("/market/price-check")}
+                  variant="outline"
+                >
+                  Price Check
+                </Button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="text-center text-gray-400">Loading trades...</div>
+            ) : trades.length === 0 ? (
+              <div className="text-center text-gray-400">No trades found</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {trades.map((trade) => (
+                  <TradeCard key={trade.id} trade={trade} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6">Recent Price Checks</h2>
+            <PriceCheckList />
           </div>
         </div>
-
-        {loading ? (
-          <div className="text-center text-gray-400">Loading trades...</div>
-        ) : trades.length === 0 ? (
-          <div className="text-center text-gray-400">No trades found</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trades.map((trade) => (
-              <TradeCard key={trade.id} trade={trade} />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
