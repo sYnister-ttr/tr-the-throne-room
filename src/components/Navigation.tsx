@@ -1,179 +1,174 @@
 
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import { useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import useMobile from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useMobile } from "@/hooks/use-mobile";
 
 const Navigation = () => {
-  const location = useLocation();
-  const isMobile = useMobile();
-  const [isScrolled, setIsScrolled] = useState(false);
   const { user, signOut } = useAuth();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [initials, setInitials] = useState("U");
+  const navigate = useNavigate();
+  const isMobile = useMobile();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
-    };
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
-  useEffect(() => {
-    if (user) {
-      // Set initials from username or email if available
-      if (user.user_metadata?.username) {
-        const username = user.user_metadata.username;
-        setInitials(username.substring(0, 2).toUpperCase());
-      } else if (user.email) {
-        setInitials(user.email.substring(0, 2).toUpperCase());
-      }
-      
-      // Set avatar URL if available
-      if (user.user_metadata?.avatar_url) {
-        setAvatarUrl(user.user_metadata.avatar_url);
-      }
-    }
-  }, [user]);
-
-  const NavLinks = () => (
-    <>
-      <Link to="/">
-        <Button 
-          variant="link" 
-          className={`text-white hover:text-diablo-500 ${location.pathname === "/" ? "text-diablo-500" : ""}`}
-        >
-          Home
-        </Button>
-      </Link>
-      <Link to="/market">
-        <Button 
-          variant="link" 
-          className={`text-white hover:text-diablo-500 ${location.pathname.includes("/market") ? "text-diablo-500" : ""}`}
-        >
-          Trade Market
-        </Button>
-      </Link>
-      <Link to="/items">
-        <Button 
-          variant="link" 
-          className={`text-white hover:text-diablo-500 ${location.pathname.includes("/items") ? "text-diablo-500" : ""}`}
-        >
-          Item Database
-        </Button>
-      </Link>
-      {user && (
-        <>
-          <Link to="/profile">
-            <Button 
-              variant="link" 
-              className={`text-white hover:text-diablo-500 ${location.pathname === "/profile" ? "text-diablo-500" : ""}`}
-            >
-              Profile
-            </Button>
-          </Link>
-          {user.email === "admin@example.com" && (
-            <Link to="/admin">
-              <Button 
-                variant="link" 
-                className={`text-white hover:text-diablo-500 ${location.pathname === "/admin" ? "text-diablo-500" : ""}`}
-              >
-                Admin
-              </Button>
-            </Link>
-          )}
-        </>
-      )}
-    </>
-  );
-
-  const AuthButtons = () => (
-    <div className="flex items-center gap-2">
-      {user ? (
-        <>
-          <Link to="/profile">
-            <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarImage src={avatarUrl ?? undefined} />
-              <AvatarFallback className="bg-diablo-500">{initials}</AvatarFallback>
-            </Avatar>
-          </Link>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
-            onClick={signOut}
-          >
-            Sign Out
-          </Button>
-        </>
-      ) : (
-        <>
-          <Link to="/login">
-            <Button variant="ghost" size="sm" className="text-white hover:text-diablo-500">
-              Sign In
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button 
-              size="sm" 
-              className="bg-diablo-500 hover:bg-diablo-600 text-white"
-            >
-              Register
-            </Button>
-          </Link>
-        </>
-      )}
-    </div>
-  );
+  const navLinks = [
+    { name: "Market", path: "/market" },
+    { name: "Price Check", path: "/price-check" },
+    { name: "Items", path: "/items" },
+    { name: "Runewords", path: "/runewords" },
+  ];
 
   return (
-    <header
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/90 backdrop-blur-sm shadow-md" : "bg-transparent"
-      }`}
-    >
+    <header className="fixed w-full bg-black/60 backdrop-blur-lg z-50 border-b border-gray-800">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold text-diablo-500">
-              DiabloTrader
+            <Link to="/" className="text-xl font-bold text-white mr-8">
+              D2R Market
             </Link>
+
+            {/* Desktop Navigation */}
+            {!isMobile && (
+              <nav className="hidden md:flex space-x-4">
+                {navLinks.map((link) => (
+                  <NavLink
+                    key={link.path}
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `px-3 py-2 rounded-md text-sm font-medium ${
+                        isActive
+                          ? "bg-diablo-600 text-white"
+                          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                      }`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                ))}
+              </nav>
+            )}
           </div>
 
-          {isMobile ? (
-            <>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white">
-                    <Menu className="h-6 w-6" />
+          <div className="flex items-center">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="/placeholder.svg" alt={user.email} />
+                      <AvatarFallback>
+                        {user.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
-                </SheetTrigger>
-                <SheetContent className="bg-background border-diablo-700">
-                  <div className="flex flex-col space-y-4 mt-8">
-                    <NavLinks />
-                    <div className="pt-4">
-                      <AuthButtons />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.email}
+                      </p>
                     </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </>
-          ) : (
-            <>
-              <nav className="flex items-center space-x-1">
-                <NavLinks />
-              </nav>
-              <AuthButtons />
-            </>
-          )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => navigate("/profile")}
+                    className="cursor-pointer"
+                  >
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate("/runewords/add")}
+                    className="cursor-pointer"
+                  >
+                    Add Runeword
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="cursor-pointer"
+                  >
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  className="text-white"
+                  onClick={() => navigate("/login")}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  className="bg-diablo-600 hover:bg-diablo-700"
+                  onClick={() => navigate("/register")}
+                >
+                  Register
+                </Button>
+              </div>
+            )}
+
+            {/* Mobile menu button */}
+            {isMobile && (
+              <button
+                onClick={toggleMenu}
+                className="md:hidden ml-2 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              >
+                <span className="sr-only">Open main menu</span>
+                {isMenuOpen ? (
+                  <X className="block h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <Menu className="block h-6 w-6" aria-hidden="true" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobile && isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.path}
+                  to={link.path}
+                  className={({ isActive }) =>
+                    `block px-3 py-2 rounded-md text-base font-medium ${
+                      isActive
+                        ? "bg-diablo-600 text-white"
+                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    }`
+                  }
+                  onClick={toggleMenu}
+                >
+                  {link.name}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

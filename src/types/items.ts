@@ -32,3 +32,26 @@ export interface Item {
   stats: string[];
   description?: string;
 }
+
+// New interfaces for runewords
+export interface VariableStat {
+  min: number;
+  max: number;
+}
+
+export interface RunewordVariableStats {
+  [key: string]: VariableStat;
+}
+
+export interface Runeword {
+  id: string;
+  name: string;
+  game: GameType;
+  runes: string[];
+  base_types: string[];
+  required_level: number;
+  variable_stats: RunewordVariableStats;
+  fixed_stats: string[];
+  created_at: string;
+  updated_at: string;
+}
