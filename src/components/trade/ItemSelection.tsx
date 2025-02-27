@@ -6,10 +6,17 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GameType, Item, Runeword } from "@/types/items";
+import { GameType } from "@/types/items";
 import { Textarea } from "@/components/ui/textarea";
+
+interface ItemSearchResult {
+  id: string;
+  name: string;
+  itemType: string;
+  category: string;
+  base_types?: string[];
+}
 
 interface ItemSelectionProps {
   gameType: GameType;
@@ -34,36 +41,52 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   const { data: searchResults = [], isLoading } = useQuery({
     queryKey: ["items-runewords-search", gameType, searchTerm],
     queryFn: async () => {
-      console.log("Fetching items and runewords for game:", gameType);
+      console.log("Fetching items and runewords for game:", gameType, "search:", searchTerm);
+      
+      if (!searchTerm || searchTerm.length < 2) {
+        return [];
+      }
       
       try {
         // Fetch items
         const { data: items = [], error: itemsError } = await supabase
           .from("items")
-          .select("*")
+          .select("id, name, category, rarity")
           .eq("game", gameType)
           .ilike("name", `%${searchTerm}%`)
           .limit(20);
           
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error("Error fetching items:", itemsError);
+          throw itemsError;
+        }
+
+        console.log("Items found:", items.length);
 
         // Fetch runewords
         const { data: runewords = [], error: runewordsError } = await supabase
           .from("runewords")
-          .select("*")
+          .select("id, name, base_types")
           .eq("game", gameType)
           .ilike("name", `%${searchTerm}%`)
           .limit(20);
           
-        if (runewordsError) throw runewordsError;
+        if (runewordsError) {
+          console.error("Error fetching runewords:", runewordsError);
+          throw runewordsError;
+        }
+
+        console.log("Runewords found:", runewords.length);
 
         // Combine and format results
-        const formattedItems = items.map((item: Item) => ({
-          ...item,
-          itemType: item.rarity === 'normal' ? 'base' : item.rarity
+        const formattedItems = items.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          itemType: item.rarity || 'normal',
+          category: item.category
         }));
 
-        const formattedRunewords = runewords.map((runeword: Runeword) => ({
+        const formattedRunewords = runewords.map((runeword: any) => ({
           id: runeword.id,
           name: runeword.name,
           itemType: 'runeword',
@@ -71,24 +94,26 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
           base_types: runeword.base_types
         }));
 
-        return [...formattedItems, ...formattedRunewords];
+        const results = [...formattedItems, ...formattedRunewords];
+        console.log("Combined results:", results.length);
+        return results;
       } catch (error) {
-        console.error("Exception fetching items:", error);
+        console.error("Exception fetching items and runewords:", error);
         return [];
       }
     },
-    enabled: searchTerm.length > 0
+    enabled: searchTerm.length >= 2
   });
 
-  const handleItemSelect = (item: any) => {
+  const handleItemSelect = (item: ItemSearchResult) => {
+    console.log("Selected item:", item);
     setSelectedItemType(item.itemType);
     
-    if (item.itemType === 'base' || item.itemType === 'magic' || item.itemType === 'rare') {
+    if (item.itemType === 'normal' || item.itemType === 'magic' || item.itemType === 'rare') {
       // For base, magic, and rare items, show custom properties input
       setCustomProperties("");
     } else {
-      // For unique, set, and runeword items, clear custom properties
-      setCustomProperties("");
+      // For unique, set, and runeword items, apply immediately
       onItemSelect(item.name);
     }
     
@@ -117,17 +142,17 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         <PopoverContent className="w-full p-0">
           <Command>
             <CommandInput
-              placeholder="Search items..."
+              placeholder="Search items (min 2 characters)..."
               value={searchTerm}
               onValueChange={setSearchTerm}
               className="h-9"
             />
             <CommandList>
               <CommandEmpty>
-                {isLoading ? "Loading..." : "No items found."}
+                {isLoading ? "Loading..." : searchTerm.length < 2 ? "Type at least 2 characters to search" : "No items found."}
               </CommandEmpty>
               <CommandGroup>
-                {searchResults.map((item) => (
+                {searchResults.map((item: ItemSearchResult) => (
                   <CommandItem
                     key={item.id}
                     value={item.name}
@@ -153,7 +178,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
       </Popover>
 
       {/* Custom Properties Input for Base/Magic/Rare Items */}
-      {selectedItemType && (selectedItemType === 'base' || selectedItemType === 'magic' || selectedItemType === 'rare') && (
+      {selectedItemType && (selectedItemType === 'normal' || selectedItemType === 'magic' || selectedItemType === 'rare') && (
         <div className="space-y-2">
           <Label htmlFor="customProperties">
             Item Properties 
