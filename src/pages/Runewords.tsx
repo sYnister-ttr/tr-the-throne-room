@@ -19,13 +19,21 @@ const Runewords = () => {
   const [manualFetch, setManualFetch] = useState(false);
   const { toast } = useToast();
 
+  // This effect runs on component mount to check Supabase connectivity
+  useEffect(() => {
+    console.log("Runewords component mounted - testing Supabase connection...");
+    testDirectFetch(false); // Run a silent test on load
+  }, []);
+
   // Separate function for direct Supabase testing
-  const testDirectFetch = async () => {
+  const testDirectFetch = async (showToast: boolean = true) => {
     try {
-      toast({
-        title: "Testing connection...",
-        description: "Attempting direct database connection",
-      });
+      if (showToast) {
+        toast({
+          title: "Testing connection...",
+          description: "Attempting direct database connection",
+        });
+      }
       
       console.log("Starting direct Supabase test...");
       const { data, error } = await supabase
@@ -35,30 +43,38 @@ const Runewords = () => {
       
       if (error) {
         console.error("Direct Supabase test failed:", error);
-        toast({
-          variant: "destructive",
-          title: "Database Error",
-          description: `Connection failed: ${error.message}`,
-        });
+        if (showToast) {
+          toast({
+            variant: "destructive",
+            title: "Database Error",
+            description: `Connection failed: ${error.message}`,
+          });
+        }
         return false;
       }
       
       console.log("Direct Supabase test succeeded:", data);
-      toast({
-        title: "Connection Successful",
-        description: `Found ${data.length} records`,
-      });
+      if (showToast) {
+        toast({
+          title: "Connection Successful",
+          description: `Found ${data.length} records`,
+        });
+      }
       
-      // Force a refresh of the main query
-      setManualFetch(prev => !prev);
+      // Force a refresh of the main query if manual test successful
+      if (showToast) {
+        setManualFetch(prev => !prev);
+      }
       return true;
     } catch (err) {
       console.error("Unexpected error during direct test:", err);
-      toast({
-        variant: "destructive",
-        title: "Unexpected Error",
-        description: `Error: ${err instanceof Error ? err.message : String(err)}`,
-      });
+      if (showToast) {
+        toast({
+          variant: "destructive",
+          title: "Unexpected Error",
+          description: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
       return false;
     }
   };
@@ -124,7 +140,7 @@ const Runewords = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
-          <Button onClick={testDirectFetch} variant="outline">
+          <Button onClick={() => testDirectFetch(true)} variant="outline">
             Test Connection
           </Button>
         </div>
@@ -213,7 +229,7 @@ const Runewords = () => {
                   Retry
                 </Button>
                 <Button 
-                  onClick={testDirectFetch}
+                  onClick={() => testDirectFetch(true)}
                   variant="outline"
                 >
                   Test Connection
@@ -230,7 +246,7 @@ const Runewords = () => {
                   Connecting to Supabase and fetching data...
                 </p>
                 <Button 
-                  onClick={testDirectFetch}
+                  onClick={() => testDirectFetch(true)}
                   variant="outline"
                   className="mt-4"
                 >
