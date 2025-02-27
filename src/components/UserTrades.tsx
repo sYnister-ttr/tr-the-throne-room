@@ -17,6 +17,7 @@ const UserTrades = ({ userId }: UserTradesProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("UserTrades component mounted, userId:", userId);
     if (userId) {
       fetchUserTrades();
     } else {
@@ -25,8 +26,15 @@ const UserTrades = ({ userId }: UserTradesProps) => {
   }, [userId]);
 
   const fetchUserTrades = async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       console.log("Fetching trades for user ID:", userId);
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from("trades")
         .select("*")
@@ -52,8 +60,12 @@ const UserTrades = ({ userId }: UserTradesProps) => {
     }
   };
 
+  if (!userId) {
+    return <div className="text-center text-gray-400">Please log in to view your trades</div>;
+  }
+
   if (loading) {
-    return <div className="text-gray-400">Loading your listings...</div>;
+    return <div className="text-center text-gray-400">Loading your listings...</div>;
   }
 
   if (trades.length === 0) {

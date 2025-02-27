@@ -27,13 +27,15 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("PriceCheckList received userId:", userId);
+    console.log("PriceCheckList component mounted, userId:", userId);
     fetchPriceChecks();
   }, [userId]);
 
   const fetchPriceChecks = async () => {
     try {
       console.log("Fetching price checks for userId:", userId);
+      setLoading(true);
+      
       let query = supabase
         .from("price_checks")
         .select(`
@@ -73,7 +75,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   };
 
   if (loading) {
-    return <div className="text-gray-400">Loading price checks...</div>;
+    return <div className="text-center py-4 text-gray-400">Loading price checks...</div>;
   }
 
   if (priceChecks.length === 0) {

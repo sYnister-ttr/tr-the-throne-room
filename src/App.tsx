@@ -20,7 +20,14 @@ import NotFound from "@/pages/NotFound";
 import Admin from "@/pages/Admin";
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 function App() {
   return (

@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log("Fetching role for user ID:", userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return null;
       }
       
+      console.log("User role data:", data);
       return data?.role || 'user';
     } catch (error) {
       console.error("Exception fetching user role:", error);
@@ -65,63 +67,84 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Create a new object with the User properties and treat it as UserWithRole
-        const userWithoutRole = { 
-          ...session.user,
-          role: undefined as unknown as UserRole // Initialize with undefined but keep type compatible
-        } as UserWithRole;
-        setUser(userWithoutRole);
+    // Initial auth state check
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
         
-        fetchUserRole(userWithoutRole.id).then(role => {
+        if (data.session?.user) {
+          console.log("Found authenticated user:", data.session.user.id);
+          const userWithoutRole = { 
+            ...data.session.user,
+            role: undefined as unknown as UserRole
+          } as UserWithRole;
+          
+          setUser(userWithoutRole);
+          
+          const role = await fetchUserRole(userWithoutRole.id);
           if (role) {
             setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
           }
-        });
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-        setIsModerator(false);
-      }
-      setLoading(false);
-    });
-
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        // Create a new object with the User properties and treat it as UserWithRole
-        const userWithoutRole = { 
-          ...session.user,
-          role: undefined as unknown as UserRole // Initialize with undefined but keep type compatible
-        } as UserWithRole;
-        setUser(userWithoutRole);
-        
-        const role = await fetchUserRole(userWithoutRole.id);
-        if (role) {
-          setUser({ ...userWithoutRole, role: role as UserRole });
-          setIsAdmin(role === 'admin');
-          setIsModerator(role === 'moderator' || role === 'admin');
+        } else {
+          console.log("No authenticated user found");
+          setUser(null);
+          setIsAdmin(false);
+          setIsModerator(false);
         }
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-        setIsModerator(false);
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+    
+    checkSession();
 
-    return () => subscription.unsubscribe();
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        
+        if (session?.user) {
+          const userWithoutRole = { 
+            ...session.user,
+            role: undefined as unknown as UserRole
+          } as UserWithRole;
+          
+          setUser(userWithoutRole);
+          
+          const role = await fetchUserRole(userWithoutRole.id);
+          if (role) {
+            setUser({ ...userWithoutRole, role: role as UserRole });
+            setIsAdmin(role === 'admin');
+            setIsModerator(role === 'moderator' || role === 'admin');
+          }
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+          setIsModerator(false);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsAdmin(false);
-    setIsModerator(false);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsAdmin(false);
+      setIsModerator(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return (

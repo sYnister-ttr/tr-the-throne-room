@@ -19,12 +19,14 @@ const Market = () => {
   const { user } = useAuth();
 
   useEffect(() => {
+    console.log("Market component mounted");
     fetchTrades();
   }, []);
 
   const fetchTrades = async () => {
     try {
       console.log("Fetching trades...");
+      setLoading(true);
       const { data, error } = await supabase
         .from("trades")
         .select(`
@@ -81,9 +83,19 @@ const Market = () => {
             </div>
 
             {loading ? (
-              <div className="text-center text-gray-400">Loading trades...</div>
+              <div className="text-center py-12 text-gray-400">
+                <p>Loading trades...</p>
+              </div>
             ) : trades.length === 0 ? (
-              <div className="text-center text-gray-400">No trades found</div>
+              <div className="text-center py-12 text-gray-400">
+                <p>No trades found</p>
+                <Button 
+                  onClick={() => navigate("/market/create")}
+                  className="mt-4 bg-diablo-600 hover:bg-diablo-700"
+                >
+                  Create Your First Listing
+                </Button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {trades.map((trade) => (
