@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -9,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GameType } from "@/types/items";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ItemSearchResult {
   id: string;
@@ -120,64 +120,64 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   });
 
   // Get specific property suggestions based on selected item
-  const getItemSpecificProperties = () => {
+  const getItemSpecificSuggestions = () => {
     const itemName = searchTerm.toLowerCase();
     
     // Specific runewords
     if (selectedItemType === 'runeword') {
       if (itemName === 'infinity') {
         return [
-          { name: "Base Item", value: "" },
-          { name: "-% to Enemy Lightning Resistance", value: "" },
-          { name: "Lightning Absorb", value: "" },
-          { name: "Vitality", value: "" },
-          { name: "Critical Strike", value: "" }
+          "Base Item",
+          "-% to Enemy Lightning Resistance",
+          "Lightning Absorb",
+          "Vitality",
+          "Critical Strike"
         ];
       }
       
       if (itemName === 'enigma') {
         return [
-          { name: "Base Item", value: "" },
-          { name: "+to Strength", value: "" },
-          { name: "+% Enhanced Defense", value: "" },
-          { name: "Magic Find", value: "" },
-          { name: "Damage Reduced", value: "" }
+          "Base Item",
+          "+to Strength",
+          "+% Enhanced Defense",
+          "Magic Find",
+          "Damage Reduced"
         ];
       }
 
-      if (itemName === 'call to arms') {
+      if (itemName === 'call to arms' || itemName === 'cta') {
         return [
-          { name: "Base Item", value: "" },
-          { name: "Battle Command", value: "" },
-          { name: "Battle Orders", value: "" },
-          { name: "Battle Cry", value: "" }
+          "Base Item",
+          "Battle Command",
+          "Battle Orders",
+          "Battle Cry"
         ];
       }
       
       if (itemName === 'spirit') {
         return [
-          { name: "Base Item", value: "" },
-          { name: "+to All Skills", value: "" },
-          { name: "Faster Cast Rate", value: "" },
-          { name: "Vitality", value: "" },
-          { name: "Mana", value: "" }
+          "Base Item",
+          "+to All Skills",
+          "Faster Cast Rate",
+          "Vitality",
+          "Mana"
         ];
       }
       
       if (itemName === 'grief') {
         return [
-          { name: "Base Item", value: "" },
-          { name: "+Damage", value: "" },
-          { name: "Increased Attack Speed", value: "" },
-          { name: "+to Life After Kill", value: "" }
+          "Base Item",
+          "+Damage",
+          "Increased Attack Speed",
+          "+to Life After Kill"
         ];
       }
       
       // Default runeword properties
       return [
-        { name: "Base Item", value: "" },
-        { name: "Sockets", value: "" },
-        { name: "+% Enhanced Defense", value: "" }
+        "Base Item",
+        "Sockets",
+        "+% Enhanced Defense"
       ];
     }
     
@@ -185,48 +185,58 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     if (selectedItemType === 'unique') {
       if (itemName === 'shako' || itemName === 'harlequin crest') {
         return [
-          { name: "Defense", value: "" },
-          { name: "+to All Skills", value: "" },
-          { name: "Magic Find", value: "" },
-          { name: "+to Life", value: "" },
-          { name: "+to Mana", value: "" }
+          "Defense",
+          "+to All Skills",
+          "Magic Find",
+          "+to Life",
+          "+to Mana"
         ];
       }
       
       if (itemName === 'herald of zakarum' || itemName === 'hoz') {
         return [
-          { name: "Enhanced Defense", value: "" },
-          { name: "Blocking", value: "" },
-          { name: "+to Paladin Skills", value: "" },
-          { name: "Resistances", value: "" }
+          "Enhanced Defense",
+          "Blocking",
+          "+to Paladin Skills",
+          "Resistances"
         ];
       }
 
       if (itemName.includes('oculus') || itemName.includes('occy')) {
         return [
-          { name: "+to All Skills", value: "" },
-          { name: "Faster Cast Rate", value: "" },
-          { name: "Resistances", value: "" },
-          { name: "Magic Find", value: "" }
+          "+to All Skills",
+          "Faster Cast Rate",
+          "Resistances",
+          "Magic Find"
         ];
       }
       
       if (itemName.includes('stormshield')) {
         return [
-          { name: "Enhanced Defense", value: "" },
-          { name: "Damage Reduction", value: "" },
-          { name: "Block", value: "" },
-          { name: "Cold Resistance", value: "" }
+          "Enhanced Defense",
+          "Damage Reduction",
+          "Block",
+          "Cold Resistance"
         ];
       }
       
       if (itemName.includes('titan')) {
         return [
-          { name: "Enhanced Damage", value: "" },
-          { name: "Amazon Skills", value: "" },
-          { name: "Replenishes Quantity", value: "" },
-          { name: "Strength", value: "" },
-          { name: "Increased Attack Speed", value: "" }
+          "Enhanced Damage",
+          "Amazon Skills",
+          "Replenishes Quantity",
+          "Strength",
+          "Increased Attack Speed"
+        ];
+      }
+
+      if (itemName.includes('circlet') || itemName.includes('coronet') || itemName.includes('tiara') || itemName.includes('diadem')) {
+        return [
+          "+to Skills",
+          "Faster Cast Rate",
+          "Resistances",
+          "Strength",
+          "Dexterity"
         ];
       }
     }
@@ -235,25 +245,25 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     if (selectedItemType === 'normal') {
       if (selectedItemCategory === 'weapon') {
         return [
-          { name: "Sockets", value: "" },
-          { name: "Enhanced Damage", value: "" },
-          { name: "Attack Rating", value: "" }
+          "Sockets",
+          "Enhanced Damage",
+          "Attack Rating"
         ];
       }
       
       if (selectedItemCategory === 'armor') {
         return [
-          { name: "Sockets", value: "" },
-          { name: "Enhanced Defense", value: "" },
-          { name: "Defense", value: "" }
+          "Sockets",
+          "Enhanced Defense",
+          "Defense"
         ];
       }
       
       if (selectedItemCategory === 'jewelry') {
         return [
-          { name: "Resistances", value: "" },
-          { name: "Faster Cast Rate", value: "" },
-          { name: "Magic Find", value: "" }
+          "Resistances",
+          "Faster Cast Rate",
+          "Magic Find"
         ];
       }
     }
@@ -261,38 +271,38 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     if (selectedItemType === 'magic' || selectedItemType === 'rare') {
       if (selectedItemCategory === 'weapon') {
         return [
-          { name: "Enhanced Damage", value: "" },
-          { name: "Attack Speed", value: "" },
-          { name: "Strength", value: "" },
-          { name: "Life Leech", value: "" }
+          "Enhanced Damage",
+          "Attack Speed",
+          "Strength",
+          "Life Leech"
         ];
       }
       
       if (selectedItemCategory === 'armor') {
         return [
-          { name: "Enhanced Defense", value: "" },
-          { name: "Life", value: "" },
-          { name: "Resistances", value: "" },
-          { name: "Faster Hit Recovery", value: "" }
+          "Enhanced Defense",
+          "Life",
+          "Resistances",
+          "Faster Hit Recovery"
         ];
       }
       
       if (selectedItemCategory === 'jewelry') {
         return [
-          { name: "Faster Cast Rate", value: "" },
-          { name: "Resistances", value: "" },
-          { name: "Life", value: "" },
-          { name: "Strength", value: "" },
-          { name: "Dexterity", value: "" }
+          "Faster Cast Rate",
+          "Resistances",
+          "Life",
+          "Strength",
+          "Dexterity"
         ];
       }
     }
     
     // Default generic properties
     return [
-      { name: "Defense", value: "" },
-      { name: "Damage", value: "" },
-      { name: "Requirements", value: "" }
+      "Defense",
+      "Damage",
+      "Requirements"
     ];
   };
 
@@ -328,7 +338,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setSelectedItemType(item.itemType);
     setSelectedItemCategory(item.category);
     
-    // Reset properties
+    // Reset properties without auto-populating
     setItemProperties([]);
     setIsEthereal(false);
     setCustomProperties("");
@@ -336,14 +346,6 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setSearchTerm(item.name);
     setOpen(false);
   };
-
-  // Set item-specific properties when search term is confirmed
-  useEffect(() => {
-    if (selectedItemType && searchTerm) {
-      // Add specific properties based on the selected item
-      setItemProperties(getItemSpecificProperties());
-    }
-  }, [selectedItemType, searchTerm, selectedItemCategory]);
 
   const addProperty = () => {
     if (!newPropertyName.trim()) return;
@@ -483,13 +485,11 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                 <Input
                   value={prop.name}
                   onChange={(e) => updatePropertyName(index, e.target.value)}
-                  placeholder="Property name"
                   className="flex-1"
                 />
                 <Input
                   value={prop.value}
                   onChange={(e) => updatePropertyValue(index, e.target.value)}
-                  placeholder="Value"
                   className="flex-1"
                 />
                 <Button 
@@ -507,9 +507,23 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
           <div className="space-y-2">
             <Label>Add Property</Label>
             <div className="flex flex-wrap gap-2 mb-2">
+              {/* Item specific suggestions first */}
+              {getItemSpecificSuggestions().map((suggestion, i) => (
+                <Button 
+                  key={`specific-${i}`} 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => selectSuggestion(suggestion)}
+                  className="text-xs"
+                >
+                  {suggestion}
+                </Button>
+              ))}
+              
+              {/* Common suggestions */}
               {getCommonPropertySuggestions().map((suggestion, i) => (
                 <Button 
-                  key={i} 
+                  key={`common-${i}`} 
                   variant="outline" 
                   size="sm"
                   onClick={() => selectSuggestion(suggestion)}
@@ -523,13 +537,11 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
               <Input
                 value={newPropertyName}
                 onChange={(e) => setNewPropertyName(e.target.value)}
-                placeholder="Property name"
                 className="flex-1"
               />
               <Input
                 value={newPropertyValue}
                 onChange={(e) => setNewPropertyValue(e.target.value)}
-                placeholder="Value"
                 className="flex-1"
               />
               <Button 
@@ -550,7 +562,6 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
               id="customProperties"
               value={customProperties}
               onChange={(e) => setCustomProperties(e.target.value)}
-              placeholder="Any other details you want to include..."
               className="min-h-[60px]"
             />
           </div>
