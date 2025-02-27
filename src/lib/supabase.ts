@@ -13,7 +13,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storageKey: 'diablo-market-auth-storage-key',
+    autoRefreshToken: true,
+  },
+  // Add global error handler for debugging
+  global: {
+    fetch: (...args) => {
+      return fetch(...args).catch(error => {
+        console.error("Supabase fetch error:", error);
+        throw error;
+      });
+    }
+  }
+});
 
 // Initialize Supabase with improved error handling
 (async function initializeSupabase() {
@@ -28,25 +43,52 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Add helper function to check for RLS issues in development mode
 export const checkTableAccess = async (tableName: string) => {
-  if (import.meta.env.DEV) {
-    try {
-      console.log(`Testing access to ${tableName} table...`);
-      const { data, error } = await supabase.from(tableName).select('*').limit(1);
-      
-      if (error) {
-        console.error(`⚠️ Access error for ${tableName}:`, error.message);
-        if (error.message.includes('permission denied')) {
-          console.warn(`🔐 This might be an RLS policy issue. Check your Supabase RLS policies for the ${tableName} table.`);
-        }
-        return false;
+  try {
+    console.log(`Testing access to ${tableName} table...`);
+    const { data, error } = await supabase.from(tableName).select('*').limit(1);
+    
+    if (error) {
+      console.error(`⚠️ Access error for ${tableName}:`, error.message);
+      if (error.message.includes('permission denied')) {
+        console.warn(`🔐 This might be an RLS policy issue. Check your Supabase RLS policies for the ${tableName} table.`);
       }
-      
-      console.log(`✅ Successfully accessed ${tableName} table`);
+      return false;
+    }
+    
+    console.log(`✅ Successfully accessed ${tableName} table`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to test ${tableName} access:`, error);
+    return false;
+  }
+};
+
+// Helper to safely access localStorage
+export const safeLocalStorage = {
+  getItem: (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error("localStorage.getItem error:", error);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
       return true;
     } catch (error) {
-      console.error(`Failed to test ${tableName} access:`, error);
+      console.error("localStorage.setItem error:", error);
+      return false;
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.error("localStorage.removeItem error:", error);
       return false;
     }
   }
-  return true; // Skip checks in production
 };

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase, checkTableAccess } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface PriceCheck {
   id: string;
@@ -31,6 +31,9 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
 
   const checkTablePermissions = async () => {
     try {
+      setLoading(true);
+      setAccessError(null);
+      
       // Check if we can access the price_checks table (RLS check)
       const hasAccess = await checkTableAccess("price_checks");
       
@@ -52,9 +55,8 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
   const fetchPriceChecks = async () => {
     try {
       console.log("Fetching price checks for userId:", userId);
-      setLoading(true);
       
-      // Use a try-catch block for direct Supabase test to diagnose issues
+      // Direct test query to diagnose connection issues
       try {
         const testQuery = await supabase.from("price_checks").select("id").limit(1);
         console.log("Test query result:", testQuery);
@@ -65,8 +67,10 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
         }
       } catch (testError) {
         console.error("Test query exception:", testError);
+        throw testError; // Re-throw to be caught by the outer try/catch
       }
       
+      // Main query with proper error handling
       let query = supabase
         .from("price_checks")
         .select(`
@@ -99,9 +103,10 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
       console.error("Error fetching price checks:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to load price checks",
+        title: "Database Error",
+        description: error?.message || "Failed to load price checks. Please try again later.",
       });
+      setAccessError("Failed to load price checks. This may be due to database permissions or connection issues.");
     } finally {
       setLoading(false);
     }
@@ -130,6 +135,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
           className="mt-4"
           onClick={() => checkTablePermissions()}
         >
+          <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
       </div>
