@@ -68,10 +68,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
-        fetchUserRole(session.user.id).then(role => {
+        // Type assertion to match UserWithRole
+        const userWithoutRole = session.user as UserWithRole;
+        setUser(userWithoutRole);
+        
+        fetchUserRole(userWithoutRole.id).then(role => {
           if (role) {
-            setUser({ ...session.user, role: role as UserRole });
+            setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
           }
@@ -87,10 +90,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for changes on auth state (sign in, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        setUser(session.user);
-        const role = await fetchUserRole(session.user.id);
+        // Type assertion to match UserWithRole
+        const userWithoutRole = session.user as UserWithRole;
+        setUser(userWithoutRole);
+        
+        const role = await fetchUserRole(userWithoutRole.id);
         if (role) {
-          setUser({ ...session.user, role: role as UserRole });
+          setUser({ ...userWithoutRole, role: role as UserRole });
           setIsAdmin(role === 'admin');
           setIsModerator(role === 'moderator' || role === 'admin');
         }
