@@ -1,21 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useAuth } from "@/contexts/AuthContext";
+import PaymentSection from "@/components/trade/PaymentSection";
+import GameSettings from "@/components/trade/GameSettings";
 import { GameType, PlatformType, GameModeType, LadderType, PaymentType } from "@/types/trading";
 
 const CreateTrade = () => {
@@ -33,7 +28,6 @@ const CreateTrade = () => {
   const [paymentType, setPaymentType] = useState<PaymentType>("currency");
   const [paymentItems, setPaymentItems] = useState("");
 
-  // Reset game mode and ladder status when game changes
   useEffect(() => {
     setGameMode('softcore');
     setLadderStatus(game === 'diablo2_resurrected' ? 'non_ladder' : 'not_applicable');
@@ -58,10 +52,7 @@ const CreateTrade = () => {
         status: "active",
       });
 
-      if (error) {
-        console.error("Error creating trade:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -78,54 +69,6 @@ const CreateTrade = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Render appropriate game modes based on selected game
-  const renderGameModes = () => {
-    return (
-      <>
-        <SelectItem value="softcore">Softcore</SelectItem>
-        <SelectItem value="hardcore">Hardcore</SelectItem>
-      </>
-    );
-  };
-
-  // Render appropriate secondary options based on selected game
-  const renderSecondaryOptions = () => {
-    if (game === 'diablo2_resurrected') {
-      return (
-        <div>
-          <Label>Ladder Status</Label>
-          <Select value={ladderStatus} onValueChange={(value: LadderType) => setLadderStatus(value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select ladder status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ladder">Ladder</SelectItem>
-              <SelectItem value="non_ladder">Non-Ladder</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    }
-    
-    return (
-      <div>
-        <Label>Season Type</Label>
-        <Select 
-          value={ladderStatus} 
-          onValueChange={(value: LadderType) => setLadderStatus(value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select season type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="seasonal">Seasonal</SelectItem>
-            <SelectItem value="eternal">Eternal</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    );
   };
 
   return (
@@ -155,84 +98,27 @@ const CreateTrade = () => {
                 required
               />
             </div>
-            <div className="space-y-4">
-              <Label>Payment Type</Label>
-              <Select value={paymentType} onValueChange={(value: PaymentType) => setPaymentType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payment type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="currency">Forum Gold</SelectItem>
-                  <SelectItem value="items">Items</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {paymentType === 'currency' ? (
-              <div>
-                <Label htmlFor="price">Price (FG)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Enter price in Forum Gold"
-                  required
-                />
-              </div>
-            ) : (
-              <div>
-                <Label htmlFor="paymentItems">Requested Items</Label>
-                <Textarea
-                  id="paymentItems"
-                  value={paymentItems}
-                  onChange={(e) => setPaymentItems(e.target.value)}
-                  placeholder="Describe the items you want in exchange..."
-                  required
-                />
-              </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Game</Label>
-                <Select value={game} onValueChange={(value: GameType) => setGame(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select game" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="diablo4">Diablo 4</SelectItem>
-                    <SelectItem value="diablo2_resurrected">Diablo 2: Resurrected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Platform</Label>
-                <Select value={platform} onValueChange={(value: PlatformType) => setPlatform(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pc">PC</SelectItem>
-                    <SelectItem value="playstation">PlayStation</SelectItem>
-                    <SelectItem value="xbox">Xbox</SelectItem>
-                    <SelectItem value="nintendo_switch">Nintendo Switch</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Game Mode</Label>
-                <Select value={gameMode} onValueChange={(value: GameModeType) => setGameMode(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select game mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {renderGameModes()}
-                  </SelectContent>
-                </Select>
-              </div>
-              {renderSecondaryOptions()}
-            </div>
+
+            <PaymentSection
+              paymentType={paymentType}
+              setPaymentType={setPaymentType}
+              price={price}
+              setPrice={setPrice}
+              paymentItems={paymentItems}
+              setPaymentItems={setPaymentItems}
+            />
+
+            <GameSettings
+              game={game}
+              setGame={setGame}
+              platform={platform}
+              setPlatform={setPlatform}
+              gameMode={gameMode}
+              setGameMode={setGameMode}
+              ladderStatus={ladderStatus}
+              setLadderStatus={setLadderStatus}
+            />
+
             <div className="flex justify-end gap-4">
               <Button
                 type="button"
