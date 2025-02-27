@@ -48,7 +48,10 @@ const CreateTrade = () => {
         status: "active",
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating trade:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -56,6 +59,7 @@ const CreateTrade = () => {
       });
       navigate("/market");
     } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
       toast({
         variant: "destructive",
         title: "Error",

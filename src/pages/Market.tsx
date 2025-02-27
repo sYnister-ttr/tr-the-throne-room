@@ -23,15 +23,27 @@ const Market = () => {
 
   const fetchTrades = async () => {
     try {
+      console.log("Fetching trades...");
       const { data, error } = await supabase
         .from("trades")
-        .select("*, profiles(username)")
+        .select(`
+          *,
+          profiles (
+            username
+          )
+        `)
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching trades:", error);
+        throw error;
+      }
+      
+      console.log("Fetched trades:", data);
       setTrades(data || []);
     } catch (error: any) {
+      console.error("Error in fetchTrades:", error);
       toast({
         variant: "destructive",
         title: "Error",
