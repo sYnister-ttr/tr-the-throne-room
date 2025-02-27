@@ -10,6 +10,7 @@ import Market from "@/pages/Market";
 import CreateTrade from "@/pages/CreateTrade";
 import TradeDetails from "@/pages/TradeDetails";
 import PriceCheck from "@/pages/PriceCheck";
+import PriceCheckDetails from "@/pages/PriceCheckDetails";
 import Profile from "@/pages/Profile";
 
 function App() {
@@ -49,6 +50,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PriceCheck />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/market/price-check/:id"
+            element={
+              <ProtectedRoute>
+                <PriceCheckDetails />
               </ProtectedRoute>
             }
           />
