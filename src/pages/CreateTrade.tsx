@@ -23,10 +23,10 @@ const CreateTrade = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
-  const [game, setGame] = useState<GameType>("diablo4");
+  const [game, setGame] = useState<GameType>("diablo2_resurrected");
   const [platform, setPlatform] = useState<PlatformType>("pc");
   const [gameMode, setGameMode] = useState<GameModeType>("softcore");
-  const [ladderStatus, setLadderStatus] = useState<LadderType>("not_applicable");
+  const [ladderStatus, setLadderStatus] = useState<LadderType>("non_ladder");
   const [paymentType, setPaymentType] = useState<PaymentType>("currency");
   const [paymentItems, setPaymentItems] = useState("");
 

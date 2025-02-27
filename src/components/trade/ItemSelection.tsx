@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GameType } from "@/types/items";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ItemSearchResult {
   id: string;
@@ -347,16 +348,18 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setOpen(false);
   };
 
-  const addProperty = () => {
-    if (!newPropertyName.trim()) return;
+  const addProperty = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
     
-    setItemProperties([...itemProperties, { 
-      name: newPropertyName, 
-      value: newPropertyValue 
-    }]);
-    
-    setNewPropertyName("");
-    setNewPropertyValue("");
+    if (newPropertyName.trim()) {
+      setItemProperties([...itemProperties, { 
+        name: newPropertyName, 
+        value: newPropertyValue 
+      }]);
+      
+      setNewPropertyName("");
+      setNewPropertyValue("");
+    }
   };
 
   const removeProperty = (index: number) => {
@@ -467,12 +470,10 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
             {(['weapon', 'armor'].includes(selectedItemCategory) || selectedItemType === 'runeword') && (
               <div className="flex items-center space-x-2">
                 <Label htmlFor="ethereal" className="text-sm">Ethereal</Label>
-                <input 
-                  type="checkbox" 
+                <Checkbox
                   id="ethereal"
                   checked={isEthereal}
-                  onChange={(e) => setIsEthereal(e.target.checked)}
-                  className="h-4 w-4"
+                  onCheckedChange={(checked) => setIsEthereal(checked === true)}
                 />
               </div>
             )}
@@ -496,6 +497,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                   variant="ghost" 
                   size="icon"
                   onClick={() => removeProperty(index)}
+                  type="button"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -514,6 +516,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                   variant="outline" 
                   size="sm"
                   onClick={() => selectSuggestion(suggestion)}
+                  type="button"
                   className="text-xs"
                 >
                   {suggestion}
@@ -527,6 +530,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                   variant="outline" 
                   size="sm"
                   onClick={() => selectSuggestion(suggestion)}
+                  type="button"
                   className="text-xs"
                 >
                   {suggestion}
@@ -545,8 +549,9 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                 className="flex-1"
               />
               <Button 
-                variant="outline" 
+                variant="outline"
                 onClick={addProperty}
+                type="button"
                 className="shrink-0"
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
@@ -568,6 +573,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
           <Button 
             onClick={handlePropertiesSubmit}
+            type="button"
             className="w-full"
           >
             Confirm Properties
