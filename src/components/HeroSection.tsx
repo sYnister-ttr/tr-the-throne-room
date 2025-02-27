@@ -7,7 +7,7 @@ const HeroSection = () => {
     <div 
       className="relative h-screen bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7)), url('lovable-uploads/62ac2d94-55e7-42fe-8668-c6e83b652481.png')`
+        backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7)), url('/62ac2d94-55e7-42fe-8668-c6e83b652481.png')`
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-background/50 to-background" />
