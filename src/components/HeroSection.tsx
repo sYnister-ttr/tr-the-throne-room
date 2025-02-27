@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Discord } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 const HeroSection = () => {
   return (
@@ -23,7 +23,7 @@ const HeroSection = () => {
             className="bg-[#5865F2] hover:bg-[#4752C4] text-white flex items-center gap-2"
             onClick={() => window.open('https://discord.gg/kTYCSbgGgH', '_blank')}
           >
-            <Discord className="w-5 h-5" />
+            <MessageSquare className="w-5 h-5" />
             Join our Discord Community
           </Button>
         </div>
