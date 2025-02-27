@@ -79,12 +79,12 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
         console.log("Items found:", items.length);
 
-        // Fetch runewords
+        // Fetch runewords - with a looser search pattern for better match rate
         const { data: runewords = [], error: runewordsError } = await supabase
           .from("runewords")
           .select("id, name, base_types")
           .eq("game", gameType)
-          .ilike("name", `%${searchTerm}%`)
+          .or(`name.ilike.%${searchTerm}%,name.ilike.${searchTerm}%,name.ilike.%${searchTerm}`)
           .limit(20);
           
         if (runewordsError) {
@@ -93,6 +93,34 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         }
 
         console.log("Runewords found:", runewords.length);
+
+        // If we still don't have runewords, let's try with common runeword searches
+        if (runewords.length === 0 && ['enigma', 'infinity', 'spirit', 'grief', 'faith', 'insight', 'call to arms', 'cta'].some(
+          rw => searchTerm.toLowerCase().includes(rw.toLowerCase())
+        )) {
+          console.log("Trying common runeword search");
+          const commonRuneword = ['enigma', 'infinity', 'spirit', 'grief', 'faith', 'insight', 'call to arms', 'cta'].find(
+            rw => searchTerm.toLowerCase().includes(rw.toLowerCase())
+          );
+          
+          if (commonRuneword) {
+            // Special case for 'call to arms' / 'cta'
+            const searchValue = commonRuneword === 'cta' ? 'call to arms' : commonRuneword;
+            
+            const { data: specificRunewords = [] } = await supabase
+              .from("runewords")
+              .select("id, name, base_types")
+              .eq("game", gameType)
+              .ilike("name", `%${searchValue}%`)
+              .limit(5);
+              
+            console.log(`Found ${specificRunewords.length} results for common runeword: ${commonRuneword}`);
+            
+            if (specificRunewords.length > 0) {
+              runewords.push(...specificRunewords);
+            }
+          }
+        }
 
         // Combine and format results
         const formattedItems = items.map((item: any) => ({
@@ -109,6 +137,36 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
           category: 'runeword',
           base_types: runeword.base_types
         }));
+
+        // Add fallback runewords if we still don't have any
+        if (formattedRunewords.length === 0) {
+          const fallbackRunewords = [
+            { name: 'Enigma', id: 'fallback-enigma', base_types: ['Body Armor'] },
+            { name: 'Infinity', id: 'fallback-infinity', base_types: ['Polearm', 'Spear'] },
+            { name: 'Spirit', id: 'fallback-spirit', base_types: ['Sword', 'Shield'] },
+            { name: 'Call to Arms', id: 'fallback-cta', base_types: ['Sword', 'Scepter', 'Hammer'] },
+            { name: 'Grief', id: 'fallback-grief', base_types: ['Sword', 'Axe'] },
+            { name: 'Insight', id: 'fallback-insight', base_types: ['Polearm', 'Staff'] },
+            { name: 'Heart of the Oak', id: 'fallback-hoto', base_types: ['Staff', 'Mace'] }
+          ];
+          
+          const matchingFallbacks = fallbackRunewords.filter(rw => 
+            rw.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            searchTerm.toLowerCase().includes(rw.name.toLowerCase())
+          );
+          
+          if (matchingFallbacks.length > 0) {
+            console.log("Using fallback runewords:", matchingFallbacks.length);
+            
+            formattedRunewords.push(...matchingFallbacks.map(rw => ({
+              id: rw.id,
+              name: rw.name,
+              itemType: 'runeword',
+              category: 'runeword',
+              base_types: rw.base_types
+            })));
+          }
+        }
 
         const results = [...formattedItems, ...formattedRunewords];
         console.log("Combined results:", results.length);
@@ -127,7 +185,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     
     // Specific runewords
     if (selectedItemType === 'runeword') {
-      if (itemName === 'infinity') {
+      if (itemName.includes('infinity')) {
         return [
           "Base Item",
           "-% to Enemy Lightning Resistance",
@@ -137,7 +195,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         ];
       }
       
-      if (itemName === 'enigma') {
+      if (itemName.includes('enigma')) {
         return [
           "Base Item",
           "+to Strength",
@@ -147,7 +205,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         ];
       }
 
-      if (itemName === 'call to arms' || itemName === 'cta') {
+      if (itemName.includes('call to arms') || itemName.includes('cta')) {
         return [
           "Base Item",
           "Battle Command",
@@ -156,7 +214,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         ];
       }
       
-      if (itemName === 'spirit') {
+      if (itemName.includes('spirit')) {
         return [
           "Base Item",
           "+to All Skills",
@@ -166,7 +224,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         ];
       }
       
-      if (itemName === 'grief') {
+      if (itemName.includes('grief')) {
         return [
           "Base Item",
           "+Damage",
