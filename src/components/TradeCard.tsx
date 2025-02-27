@@ -15,6 +15,13 @@ const TradeCard = ({ trade }: TradeCardProps) => {
     return `${trade.game === 'diablo2_resurrected' ? 'D2R' : 'D4'} | ${trade.platform} | ${trade.game_mode} | ${trade.ladder_status}`;
   };
 
+  const renderPrice = () => {
+    if (trade.payment_type === 'currency') {
+      return trade.price ? `${trade.price.toFixed(2)} FG` : 'Price not set';
+    }
+    return `Trading for: ${trade.payment_items || 'Items'}`;
+  };
+
   return (
     <Card className="bg-black/50 border-gray-800">
       <CardHeader>
@@ -23,11 +30,9 @@ const TradeCard = ({ trade }: TradeCardProps) => {
             <h3 className="text-lg font-semibold text-white">{trade.title}</h3>
             <p className="text-sm text-gray-400">{formatGameInfo()}</p>
           </div>
-          {trade.price && (
-            <span className="text-diablo-500 font-semibold">
-              ${trade.price.toFixed(2)}
-            </span>
-          )}
+          <span className="text-diablo-500 font-semibold">
+            {renderPrice()}
+          </span>
         </div>
       </CardHeader>
       <CardContent>

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { GameType, PlatformType, GameModeType, LadderType } from "@/types/trading";
+import { GameType, PlatformType, GameModeType, LadderType, PaymentType } from "@/types/trading";
 
 const CreateTrade = () => {
   const navigate = useNavigate();
@@ -30,6 +30,8 @@ const CreateTrade = () => {
   const [platform, setPlatform] = useState<PlatformType>("pc");
   const [gameMode, setGameMode] = useState<GameModeType>("softcore");
   const [ladderStatus, setLadderStatus] = useState<LadderType>("not_applicable");
+  const [paymentType, setPaymentType] = useState<PaymentType>("currency");
+  const [paymentItems, setPaymentItems] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,9 @@ const CreateTrade = () => {
         platform,
         game_mode: gameMode,
         ladder_status: ladderStatus,
-        price: price ? parseFloat(price) : null,
+        price: paymentType === 'currency' && price ? parseFloat(price) : null,
+        payment_type: paymentType,
+        payment_items: paymentType === 'items' ? paymentItems : null,
         status: "active",
       });
 
@@ -68,6 +72,25 @@ const CreateTrade = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderGameModes = () => {
+    if (game === 'diablo4') {
+      return (
+        <>
+          <SelectItem value="softcore">Softcore</SelectItem>
+          <SelectItem value="hardcore">Hardcore</SelectItem>
+          <SelectItem value="eternal">Eternal</SelectItem>
+          <SelectItem value="seasonal">Seasonal</SelectItem>
+        </>
+      );
+    }
+    return (
+      <>
+        <SelectItem value="softcore">Softcore</SelectItem>
+        <SelectItem value="hardcore">Hardcore</SelectItem>
+      </>
+    );
   };
 
   return (
@@ -97,18 +120,44 @@ const CreateTrade = () => {
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="price">Price (optional)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="Enter price"
-              />
+            <div className="space-y-4">
+              <Label>Payment Type</Label>
+              <Select value={paymentType} onValueChange={(value: PaymentType) => setPaymentType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="currency">Forum Gold</SelectItem>
+                  <SelectItem value="items">Items</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            {paymentType === 'currency' ? (
+              <div>
+                <Label htmlFor="price">Price (FG)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="Enter price in Forum Gold"
+                  required
+                />
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="paymentItems">Requested Items</Label>
+                <Textarea
+                  id="paymentItems"
+                  value={paymentItems}
+                  onChange={(e) => setPaymentItems(e.target.value)}
+                  placeholder="Describe the items you want in exchange..."
+                  required
+                />
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Game</Label>
@@ -143,8 +192,7 @@ const CreateTrade = () => {
                     <SelectValue placeholder="Select game mode" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="softcore">Softcore</SelectItem>
-                    <SelectItem value="hardcore">Hardcore</SelectItem>
+                    {renderGameModes()}
                   </SelectContent>
                 </Select>
               </div>

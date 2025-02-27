@@ -1,8 +1,9 @@
 
 export type GameType = 'diablo2_resurrected' | 'diablo4';
 export type PlatformType = 'pc' | 'playstation' | 'xbox' | 'nintendo_switch';
-export type GameModeType = 'softcore' | 'hardcore';
+export type GameModeType = 'softcore' | 'hardcore' | 'eternal' | 'seasonal';
 export type LadderType = 'ladder' | 'non_ladder' | 'not_applicable';
+export type PaymentType = 'currency' | 'items';
 
 export interface Trade {
   id: string;
@@ -14,6 +15,8 @@ export interface Trade {
   game_mode: GameModeType;
   ladder_status: LadderType;
   price: number | null;
+  payment_type: PaymentType;
+  payment_items: string | null;
   status: string;
   created_at: string;
   updated_at: string;

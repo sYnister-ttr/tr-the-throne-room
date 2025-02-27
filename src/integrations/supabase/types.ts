@@ -48,7 +48,6 @@ export type Database = {
         Row: {
           created_at: string
           game: Database["public"]["Enums"]["game_type"]
-          game_mode: Database["public"]["Enums"]["game_mode_type"]
           id: string
           item_name: string
           ladder_status: Database["public"]["Enums"]["ladder_type"]
@@ -60,7 +59,6 @@ export type Database = {
         Insert: {
           created_at?: string
           game: Database["public"]["Enums"]["game_type"]
-          game_mode: Database["public"]["Enums"]["game_mode_type"]
           id?: string
           item_name: string
           ladder_status: Database["public"]["Enums"]["ladder_type"]
@@ -72,7 +70,6 @@ export type Database = {
         Update: {
           created_at?: string
           game?: Database["public"]["Enums"]["game_type"]
-          game_mode?: Database["public"]["Enums"]["game_mode_type"]
           id?: string
           item_name?: string
           ladder_status?: Database["public"]["Enums"]["ladder_type"]
@@ -153,6 +150,8 @@ export type Database = {
           game_mode: Database["public"]["Enums"]["game_mode_type"]
           id: string
           ladder_status: Database["public"]["Enums"]["ladder_type"]
+          payment_items: string | null
+          payment_type: string
           platform: Database["public"]["Enums"]["platform_type"]
           price: number | null
           status: string | null
@@ -167,6 +166,8 @@ export type Database = {
           game_mode: Database["public"]["Enums"]["game_mode_type"]
           id?: string
           ladder_status: Database["public"]["Enums"]["ladder_type"]
+          payment_items?: string | null
+          payment_type?: string
           platform: Database["public"]["Enums"]["platform_type"]
           price?: number | null
           status?: string | null
@@ -181,6 +182,8 @@ export type Database = {
           game_mode?: Database["public"]["Enums"]["game_mode_type"]
           id?: string
           ladder_status?: Database["public"]["Enums"]["ladder_type"]
+          payment_items?: string | null
+          payment_type?: string
           platform?: Database["public"]["Enums"]["platform_type"]
           price?: number | null
           status?: string | null
@@ -198,7 +201,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      game_mode_type: "softcore" | "hardcore"
+      game_mode_type: "softcore" | "hardcore" | "eternal" | "seasonal"
       game_type: "diablo2_resurrected" | "diablo4"
       ladder_type: "ladder" | "non_ladder" | "not_applicable"
       platform_type: "pc" | "playstation" | "xbox" | "nintendo_switch"
