@@ -6,16 +6,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { AuthContextType, UserRole, UserWithRole } from "@/types/auth";
 import { fetchUserRole, signOutUser } from "@/utils/auth-utils";
 
-export const AuthContext = createContext<AuthContextType>({ 
+// Create the context with a meaningful default value
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
   signOut: async () => {},
   isAdmin: false,
   isModerator: false,
-  refreshUserRole: async () => {}
+  refreshUserRole: async () => {},
 });
 
+// Export AuthProvider component
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -192,5 +194,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Export the context type for easier importing
-export type { UserRole, UserWithRole, AuthContextType } from "@/types/auth";
+// Don't export the hook from here anymore, it's now in its own file
