@@ -22,15 +22,15 @@ const ItemCard = ({ item }: ItemCardProps) => {
 
   // Convert dynamic class names to inline styles
   const getBorderStyle = () => {
-    return { borderColor: `var(--${rarityColor.replace('-', '-')})` };
+    return { borderColor: `var(--${rarityColor})` };
   };
   
   const getTitleStyle = () => {
-    return { color: `var(--${rarityColor.replace('-', '-')})` };
+    return { color: `var(--${rarityColor})` };
   };
   
   const getBadgeStyle = () => {
-    return { backgroundColor: `var(--${categoryColor.replace('-', '-')})` };
+    return { backgroundColor: `var(--${categoryColor})` };
   };
 
   return (
