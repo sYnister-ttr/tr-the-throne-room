@@ -7,7 +7,7 @@ const HeroSection = () => {
     <div 
       className="relative h-screen bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `url('/lovable-uploads/0014e644-5504-47fe-8e56-2307ddb5a30e.png')`
+        backgroundImage: `url('/lovable-uploads/52988702-c646-4c63-bf87-e9ff0272853d.png')`
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-background z-10" />
