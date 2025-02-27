@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,12 @@ const CreateTrade = () => {
   const [ladderStatus, setLadderStatus] = useState<LadderType>("not_applicable");
   const [paymentType, setPaymentType] = useState<PaymentType>("currency");
   const [paymentItems, setPaymentItems] = useState("");
+
+  // Reset game mode and ladder status when game changes
+  useEffect(() => {
+    setGameMode('softcore');
+    setLadderStatus(game === 'diablo2_resurrected' ? 'non_ladder' : 'not_applicable');
+  }, [game]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,22 +80,51 @@ const CreateTrade = () => {
     }
   };
 
+  // Render appropriate game modes based on selected game
   const renderGameModes = () => {
-    if (game === 'diablo4') {
-      return (
-        <>
-          <SelectItem value="softcore">Softcore</SelectItem>
-          <SelectItem value="hardcore">Hardcore</SelectItem>
-          <SelectItem value="eternal">Eternal</SelectItem>
-          <SelectItem value="seasonal">Seasonal</SelectItem>
-        </>
-      );
-    }
     return (
       <>
         <SelectItem value="softcore">Softcore</SelectItem>
         <SelectItem value="hardcore">Hardcore</SelectItem>
       </>
+    );
+  };
+
+  // Render appropriate secondary options based on selected game
+  const renderSecondaryOptions = () => {
+    if (game === 'diablo2_resurrected') {
+      return (
+        <div>
+          <Label>Ladder Status</Label>
+          <Select value={ladderStatus} onValueChange={(value: LadderType) => setLadderStatus(value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select ladder status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ladder">Ladder</SelectItem>
+              <SelectItem value="non_ladder">Non-Ladder</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+    
+    return (
+      <div>
+        <Label>Season Type</Label>
+        <Select 
+          value={ladderStatus} 
+          onValueChange={(value: LadderType) => setLadderStatus(value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select season type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="seasonal">Seasonal</SelectItem>
+            <SelectItem value="eternal">Eternal</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     );
   };
 
@@ -196,19 +231,7 @@ const CreateTrade = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Ladder Status</Label>
-                <Select value={ladderStatus} onValueChange={(value: LadderType) => setLadderStatus(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select ladder status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ladder">Ladder</SelectItem>
-                    <SelectItem value="non_ladder">Non-Ladder</SelectItem>
-                    <SelectItem value="not_applicable">Not Applicable</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {renderSecondaryOptions()}
             </div>
             <div className="flex justify-end gap-4">
               <Button
