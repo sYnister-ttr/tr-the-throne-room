@@ -9,6 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      price_check_responses: {
+        Row: {
+          comment: string | null
+          created_at: string
+          estimated_price: number | null
+          id: string
+          price_check_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          estimated_price?: number | null
+          id?: string
+          price_check_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          estimated_price?: number | null
+          id?: string
+          price_check_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_check_responses_price_check_id_fkey"
+            columns: ["price_check_id"]
+            isOneToOne: false
+            referencedRelation: "price_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_checks: {
+        Row: {
+          created_at: string
+          game: Database["public"]["Enums"]["game_type"]
+          game_mode: Database["public"]["Enums"]["game_mode_type"]
+          id: string
+          item_name: string
+          ladder_status: Database["public"]["Enums"]["ladder_type"]
+          platform: Database["public"]["Enums"]["platform_type"]
+          responses_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game: Database["public"]["Enums"]["game_type"]
+          game_mode: Database["public"]["Enums"]["game_mode_type"]
+          id?: string
+          item_name: string
+          ladder_status: Database["public"]["Enums"]["ladder_type"]
+          platform: Database["public"]["Enums"]["platform_type"]
+          responses_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game?: Database["public"]["Enums"]["game_type"]
+          game_mode?: Database["public"]["Enums"]["game_mode_type"]
+          id?: string
+          item_name?: string
+          ladder_status?: Database["public"]["Enums"]["ladder_type"]
+          platform?: Database["public"]["Enums"]["platform_type"]
+          responses_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -33,6 +107,89 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_offers: {
+        Row: {
+          created_at: string
+          id: string
+          offer_details: string
+          status: string | null
+          trade_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_details: string
+          status?: string | null
+          trade_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_details?: string
+          status?: string | null
+          trade_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_offers_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trades: {
+        Row: {
+          created_at: string
+          description: string
+          game: Database["public"]["Enums"]["game_type"]
+          game_mode: Database["public"]["Enums"]["game_mode_type"]
+          id: string
+          ladder_status: Database["public"]["Enums"]["ladder_type"]
+          platform: Database["public"]["Enums"]["platform_type"]
+          price: number | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          game: Database["public"]["Enums"]["game_type"]
+          game_mode: Database["public"]["Enums"]["game_mode_type"]
+          id?: string
+          ladder_status: Database["public"]["Enums"]["ladder_type"]
+          platform: Database["public"]["Enums"]["platform_type"]
+          price?: number | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          game?: Database["public"]["Enums"]["game_type"]
+          game_mode?: Database["public"]["Enums"]["game_mode_type"]
+          id?: string
+          ladder_status?: Database["public"]["Enums"]["ladder_type"]
+          platform?: Database["public"]["Enums"]["platform_type"]
+          price?: number | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -41,7 +198,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      game_mode_type: "softcore" | "hardcore"
+      game_type: "diablo2_resurrected" | "diablo4"
+      ladder_type: "ladder" | "non_ladder" | "not_applicable"
+      platform_type: "pc" | "playstation" | "xbox" | "nintendo_switch"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -9,7 +9,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Market from "./pages/Market";
 import NotFound from "./pages/NotFound";
+import CreateTrade from "./pages/CreateTrade";
+import TradeDetails from "./pages/TradeDetails";
+import PriceCheck from "./pages/PriceCheck";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +32,38 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/market" 
+              element={
+                <ProtectedRoute>
+                  <Market />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/market/create" 
+              element={
+                <ProtectedRoute>
+                  <CreateTrade />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/market/trade/:id" 
+              element={
+                <ProtectedRoute>
+                  <TradeDetails />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/market/price-check" 
+              element={
+                <ProtectedRoute>
+                  <PriceCheck />
                 </ProtectedRoute>
               } 
             />
