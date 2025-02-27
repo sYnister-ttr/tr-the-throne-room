@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, checkTableAccess } from "@/lib/supabase";
 import Navigation from "@/components/Navigation";
 import ItemCard from "@/components/ItemCard";
 import ItemFilters from "@/components/ItemFilters";
 import { Item, GameType, ItemCategory, ItemRarity } from "@/types/items";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const ItemDatabase = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -13,6 +15,20 @@ const ItemDatabase = () => {
   const [categoryFilter, setCategoryFilter] = useState<ItemCategory | "all">("all");
   const [rarityFilter, setRarityFilter] = useState<ItemRarity | "all">("all");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
+  const [accessError, setAccessError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkAccess() {
+      const hasAccess = await checkTableAccess("items");
+      if (!hasAccess) {
+        setAccessError("Unable to access items data. Please check Supabase RLS policies.");
+      } else {
+        setAccessError(null);
+      }
+    }
+    
+    checkAccess();
+  }, []);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["items", searchTerm, gameFilter, categoryFilter, rarityFilter, levelFilter],
@@ -45,11 +61,14 @@ const ItemDatabase = () => {
       
       if (error) {
         console.error("Error fetching items:", error);
+        setAccessError(`Error fetching items: ${error.message}`);
         return [];
       }
       
+      console.log(`Successfully fetched ${data?.length || 0} items`);
       return data as Item[];
     },
+    enabled: !accessError, // Only run the query if we have access
   });
 
   return (
@@ -57,6 +76,19 @@ const ItemDatabase = () => {
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <h1 className="text-3xl font-bold text-white mb-8">Item Database</h1>
+        
+        {accessError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {accessError}
+              <p className="text-sm mt-2">
+                This is likely due to Supabase Row Level Security (RLS) policies.
+                You may need to enable public read access to the items table.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-1">
@@ -77,7 +109,7 @@ const ItemDatabase = () => {
           <div className="lg:col-span-3">
             {isLoading ? (
               <div className="text-center py-8">Loading items...</div>
-            ) : items.length === 0 ? (
+            ) : items.length === 0 && !accessError ? (
               <div className="text-center py-8">
                 No items found with the current filters.
               </div>

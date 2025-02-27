@@ -1,19 +1,35 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, checkTableAccess } from "@/lib/supabase";
 import { Runeword, GameType } from "@/types/items";
 import Navigation from "@/components/Navigation";
 import RunewordCard from "@/components/RunewordCard";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Runewords = () => {
   const [gameFilter, setGameFilter] = useState<GameType>("diablo2_resurrected");
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
   const [baseTypeFilter, setBaseTypeFilter] = useState<string>("");
+  const [accessError, setAccessError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkAccess() {
+      const hasAccess = await checkTableAccess("runewords");
+      if (!hasAccess) {
+        setAccessError("Unable to access runewords data. Please check Supabase RLS policies.");
+      } else {
+        setAccessError(null);
+      }
+    }
+    
+    checkAccess();
+  }, []);
 
   const { data: runewords = [], isLoading } = useQuery({
     queryKey: ["runewords", gameFilter, searchTerm, levelFilter, baseTypeFilter],
@@ -41,11 +57,14 @@ const Runewords = () => {
       
       if (error) {
         console.error("Error fetching runewords:", error);
+        setAccessError(`Error fetching runewords: ${error.message}`);
         return [];
       }
       
+      console.log(`Successfully fetched ${data?.length || 0} runewords`);
       return data as Runeword[];
-    }
+    },
+    enabled: !accessError, // Only run the query if we have access
   });
 
   return (
@@ -55,6 +74,19 @@ const Runewords = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
         </div>
+        
+        {accessError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {accessError}
+              <p className="text-sm mt-2">
+                This is likely due to Supabase Row Level Security (RLS) policies.
+                You may need to enable public read access to the runewords table.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-1 space-y-6">
@@ -118,7 +150,7 @@ const Runewords = () => {
           <div className="lg:col-span-3">
             {isLoading ? (
               <div className="text-center py-8">Loading runewords...</div>
-            ) : runewords.length === 0 ? (
+            ) : runewords.length === 0 && !accessError ? (
               <div className="text-center py-8">
                 No runewords found with the current filters.
               </div>

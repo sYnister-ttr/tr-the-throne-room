@@ -1,20 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { Link } from "react-router-dom";
+import { supabase, checkTableAccess } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
 interface PriceCheck {
   id: string;
   item_name: string;
-  description?: string;
   game: string;
-  platform: string;
-  game_mode: string;
-  ladder_status: string;
-  responses_count: number;
   created_at: string;
+  responses_count: number;
   profiles?: {
     username: string;
   };
@@ -23,13 +19,26 @@ interface PriceCheck {
 const PriceCheckList = ({ userId }: { userId?: string }) => {
   const [priceChecks, setPriceChecks] = useState<PriceCheck[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [accessError, setAccessError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     console.log("PriceCheckList component mounted, userId:", userId);
-    fetchPriceChecks();
+    checkTablePermissions();
   }, [userId]);
+
+  const checkTablePermissions = async () => {
+    // Check if we can access the price_checks table (RLS check)
+    const hasAccess = await checkTableAccess("price_checks");
+    if (!hasAccess) {
+      console.error("No access to price_checks table. Check RLS policies.");
+      setAccessError("Unable to access price checks data. Please check Supabase RLS policies.");
+      setLoading(false);
+      return;
+    }
+    
+    fetchPriceChecks();
+  };
 
   const fetchPriceChecks = async () => {
     try {
@@ -57,11 +66,13 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
 
       if (error) {
         console.error("Price checks query error:", error);
+        setAccessError(`Error fetching price checks: ${error.message}`);
         throw error;
       }
       
       console.log("Fetched price checks:", data);
       setPriceChecks(data || []);
+      setAccessError(null);
     } catch (error: any) {
       console.error("Error fetching price checks:", error);
       toast({
@@ -78,13 +89,25 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
     return <div className="text-center py-4 text-gray-400">Loading price checks...</div>;
   }
 
+  if (accessError) {
+    return (
+      <div className="text-center py-4 bg-red-900/30 border border-red-700 rounded-md">
+        <p className="text-red-400">{accessError}</p>
+        <p className="text-sm text-gray-400 mt-2">
+          This is likely due to Supabase Row Level Security (RLS) policies.
+          You may need to enable public read access to the price_checks table.
+        </p>
+      </div>
+    );
+  }
+
   if (priceChecks.length === 0) {
     return (
       <div className="text-center py-4">
         <p className="text-gray-400 mb-4">No price checks found.</p>
         {userId && (
           <Button 
-            onClick={() => navigate("/price-check")}
+            onClick={() => window.location.href = "/price-check"}
             className="bg-diablo-600 hover:bg-diablo-700"
           >
             Create a Price Check
@@ -117,7 +140,7 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/price-check/${check.id}`)}
+              onClick={() => window.location.href = `/price-check/${check.id}`}
             >
               View Details
             </Button>
