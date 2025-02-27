@@ -62,14 +62,21 @@ const GameSettings = ({
         <Label>Season Type</Label>
         <Select 
           value={ladderStatus} 
-          onValueChange={(value: LadderType) => setLadderStatus(value)}
+          onValueChange={(value: LadderType) => {
+            // Map the season type to the correct ladder status value
+            if (value === 'seasonal') {
+              setLadderStatus('ladder');
+            } else if (value === 'eternal') {
+              setLadderStatus('non_ladder');
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select season type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="seasonal">Seasonal</SelectItem>
-            <SelectItem value="eternal">Eternal</SelectItem>
+            <SelectItem value="ladder">Seasonal</SelectItem>
+            <SelectItem value="non_ladder">Eternal</SelectItem>
           </SelectContent>
         </Select>
       </div>
