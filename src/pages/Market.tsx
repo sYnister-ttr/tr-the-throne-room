@@ -27,10 +27,14 @@ const Market = () => {
     try {
       console.log("Fetching trades...");
       setLoading(true);
-      
       const { data, error } = await supabase
         .from("trades")
-        .select("*")
+        .select(`
+          *,
+          profiles (
+            username
+          )
+        `)
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
@@ -46,7 +50,7 @@ const Market = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to fetch trades. Please try refreshing the page.",
+        description: "Failed to fetch trades",
       });
     } finally {
       setLoading(false);
