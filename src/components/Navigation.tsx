@@ -1,8 +1,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Shield, ShoppingCart, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
+  const navigate = useNavigate();
+
   return (
     <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-sm border-b border-gray-800 z-50">
       <div className="container mx-auto px-4">
@@ -27,10 +30,17 @@ const Navigation = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" className="text-gray-300 hover:text-white">
+            <Button 
+              variant="ghost" 
+              className="text-gray-300 hover:text-white"
+              onClick={() => navigate('/login')}
+            >
               Sign In
             </Button>
-            <Button className="bg-diablo-600 hover:bg-diablo-700 text-white">
+            <Button 
+              className="bg-diablo-600 hover:bg-diablo-700 text-white"
+              onClick={() => navigate('/register')}
+            >
               Register
             </Button>
           </div>
