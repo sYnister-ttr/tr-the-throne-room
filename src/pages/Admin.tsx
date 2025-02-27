@@ -15,6 +15,7 @@ interface ItemStats {
   total: number;
   d2Count: number;
   d4Count: number;
+  runewordsCount: number; // Added runewords count
 }
 
 interface Item {
@@ -27,6 +28,16 @@ interface Item {
   stats: string[];
   description: string;
   base_type: string;
+}
+
+interface Runeword {
+  name: string;
+  game: string;
+  runes: string[];
+  base_types: string[];
+  required_level: number;
+  variable_stats: Record<string, { min: number; max: number }>;
+  fixed_stats: string[];
 }
 
 const AdminPage = () => {
@@ -70,10 +81,18 @@ const AdminPage = () => {
         
         if (d4Error) throw d4Error;
         
+        // Get runewords count
+        const { count: runewordsCount, error: runewordsError } = await supabase
+          .from('runewords')
+          .select('*', { count: 'exact', head: true });
+        
+        if (runewordsError) throw runewordsError;
+        
         return {
           total: totalCount || 0,
           d2Count: d2Count || 0,
           d4Count: d4Count || 0,
+          runewordsCount: runewordsCount || 0
         } as ItemStats;
       } catch (error: any) {
         toast({
@@ -85,6 +104,7 @@ const AdminPage = () => {
           total: 0,
           d2Count: 0,
           d4Count: 0,
+          runewordsCount: 0
         } as ItemStats;
       }
     },
@@ -374,6 +394,9 @@ const AdminPage = () => {
           });
           names.push(charm.name);
         }
+      } else if (category === "d2r_runewords") {
+        // This is a new category specifically for runewords
+        return { items: [], names: [] }; // We'll handle runewords separately
       }
       
       // Apply limit
@@ -397,71 +420,428 @@ const AdminPage = () => {
     }
   };
 
+  // Function to fetch runewords for importing
+  const fetchWikiRunewords = async (limit: number): Promise<{ runewords: Runeword[], names: string[] }> => {
+    setIsFetchingWiki(true);
+    let runewords: Runeword[] = [];
+    let names: string[] = [];
+    
+    try {
+      // Common D2R runewords
+      const runewordData = [
+        {
+          name: "Breath of the Dying",
+          runes: ["Vex", "Hel", "El", "Eld", "Zod", "Eth"],
+          base_types: ["Weapons"],
+          required_level: 69,
+          variable_stats: {
+            enhanced_damage: { min: 350, max: 400 },
+            attack_rating: { min: 200, max: 200 }
+          },
+          fixed_stats: [
+            "50% Chance To Cast Level 20 Poison Nova When You Kill An Enemy",
+            "Indestructible",
+            "+60% Increased Attack Speed",
+            "+350-400% Enhanced Damage",
+            "+200% Damage To Undead",
+            "-25% Target Defense",
+            "+50 To Attack Rating",
+            "+200 To Attack Rating Against Undead",
+            "7% Mana Stolen Per Hit",
+            "12-15% Life Stolen Per Hit",
+            "Prevent Monster Heal",
+            "+30 To All Attributes",
+            "+1 To Light Radius",
+            "Requirements -20%"
+          ]
+        },
+        {
+          name: "Chain of Honor",
+          runes: ["Dol", "Um", "Ber", "Ist"],
+          base_types: ["Body Armor"],
+          required_level: 63,
+          variable_stats: {
+            defense: { min: 0, max: 0 }
+          },
+          fixed_stats: [
+            "+2 To All Skills",
+            "+200% Damage To Demons",
+            "+100% Damage To Undead",
+            "8% Life Stolen Per Hit",
+            "+70% Enhanced Defense",
+            "+20 To Strength",
+            "Replenish Life +7",
+            "All Resistances +65",
+            "Damage Reduced By 8%",
+            "25% Better Chance of Getting Magic Items"
+          ]
+        },
+        {
+          name: "Crescent Moon",
+          runes: ["Shael", "Um", "Tir"],
+          base_types: ["Axes", "Swords", "Polearms"],
+          required_level: 47,
+          variable_stats: {
+            ignore_target_defense: { min: 0, max: 0 }
+          },
+          fixed_stats: [
+            "10% Chance To Cast Level 17 Chain Lightning On Striking",
+            "7% Chance To Cast Level 13 Static Field On Striking",
+            "+20% Increased Attack Speed",
+            "+180-220% Enhanced Damage",
+            "Ignore Target's Defense",
+            "-35% To Enemy Lightning Resistance",
+            "25% Chance of Open Wounds",
+            "+9-11 Magic Absorb",
+            "+2 To Mana After Each Kill",
+            "Level 18 Summon Spirit Wolf (30 Charges)"
+          ]
+        },
+        {
+          name: "Duress",
+          runes: ["Shael", "Um", "Thul"],
+          base_types: ["Body Armor"],
+          required_level: 47,
+          variable_stats: {
+            enhanced_damage: { min: 10, max: 20 },
+            cold_damage: { min: 37, max: 133 }
+          },
+          fixed_stats: [
+            "40% faster hit Recovery",
+            "+10-20% Enhanced Damage",
+            "Adds 37-133 Cold Damage",
+            "15% Chance of Crushing Blow",
+            "33% Chance of Open Wounds",
+            "+150-200% Enhanced Defense",
+            "-20% Slower Stamina Drain",
+            "Cold Resist +45%",
+            "Lightning Resist +15%",
+            "Fire Resist +15%",
+            "Poison Resist +15%"
+          ]
+        },
+        {
+          name: "Exile",
+          runes: ["Vex", "Ohm", "Ist", "Dol"],
+          base_types: ["Paladin Shields"],
+          required_level: 57,
+          variable_stats: {
+            defense_per_level: { min: 1, max: 2 },
+            skill_defiance: { min: 13, max: 16 }
+          },
+          fixed_stats: [
+            "15% Chance To Cast Level 5 Life Tap On Striking",
+            "Level 13-16 Defiance Aura When Equipped",
+            "+2 To Offensive Auras (Paladin Only)",
+            "+30% Faster Block Rate",
+            "Freezes Target",
+            "+220-260% Enhanced Defense",
+            "Replenish Life +7",
+            "+5% To Maximum Cold Resist",
+            "+5% To Maximum Fire Resist",
+            "25% Better Chance Of Getting Magic Items",
+            "Repairs 1 Durability every 4 seconds"
+          ]
+        },
+        {
+          name: "Faith",
+          runes: ["Ohm", "Jah", "Lem", "Eld"],
+          base_types: ["Missile Weapons"],
+          required_level: 65,
+          variable_stats: {
+            fanaticism_level: { min: 12, max: 15 },
+            enhanced_damage: { min: 280, max: 320 }
+          },
+          fixed_stats: [
+            "Level 12-15 Fanaticism Aura When Equipped",
+            "+1-2 To All Skills",
+            "+330% Enhanced Damage",
+            "Ignore Target's Defense",
+            "300% Bonus To Attack Rating",
+            "+75% Damage To Undead",
+            "+50 To Attack Rating Against Undead",
+            "+120 Fire Damage",
+            "All Resistances +15",
+            "10% Reanimate As: Returned",
+            "75% Extra Gold From Monsters"
+          ]
+        },
+        {
+          name: "Fortitude",
+          runes: ["El", "Sol", "Dol", "Lo"],
+          base_types: ["Weapons", "Body Armor"],
+          required_level: 59,
+          variable_stats: {
+            enhanced_damage: { min: 200, max: 300 },
+            enhanced_defense: { min: 200, max: 300 }
+          },
+          fixed_stats: [
+            "20% Chance To Cast Level 15 Chilling Armor when Struck",
+            "+25% Faster Cast Rate",
+            "+300% Enhanced Damage",
+            "+200% Enhanced Defense",
+            "+15 Defense",
+            "Replenish Life +7",
+            "+5% To Maximum Lightning Resist",
+            "All Resistances +25-30",
+            "Damage Reduced By 7",
+            "12% Damage Taken Goes To Mana",
+            "+1 To Light Radius"
+          ]
+        },
+        {
+          name: "Last Wish",
+          runes: ["Jah", "Mal", "Jah", "Sur", "Jah", "Ber"],
+          base_types: ["Swords", "Hammers", "Axes"],
+          required_level: 65,
+          variable_stats: {
+            might_level: { min: 17, max: 17 }
+          },
+          fixed_stats: [
+            "6% Chance To Cast Level 11 Fade When Struck",
+            "10% Chance To Cast Level 18 Life Tap On Striking",
+            "20% Chance To Cast Level 20 Charged Bolt On Attack",
+            "Level 17 Might Aura When Equipped",
+            "+330-375% Enhanced Damage",
+            "Ignore Target's Defense",
+            "60-70% Chance of Crushing Blow",
+            "Prevent Monster Heal",
+            "Hit Blinds Target",
+            "(0.5*Clvl)% Chance of Getting Magic Items (Based on Character Level)"
+          ]
+        },
+        {
+          name: "Lawbringer",
+          runes: ["Amn", "Lem", "Ko"],
+          base_types: ["Swords", "Hammers", "Scepters"],
+          required_level: 43,
+          variable_stats: {
+            sanctuary_level: { min: 16, max: 18 }
+          },
+          fixed_stats: [
+            "20% Chance To Cast Level 15 Decrepify On Striking",
+            "Level 16-18 Sanctuary Aura When Equipped",
+            "-50% Target Defense",
+            "Adds 150-210 Fire Damage",
+            "Adds 130-180 Cold Damage",
+            "7% Life Stolen Per Hit",
+            "Slain Monsters Rest In Peace",
+            "+200-250 Defense Vs. Missile",
+            "+10 To Dexterity",
+            "75% Extra Gold From Monsters"
+          ]
+        },
+        {
+          name: "Oath",
+          runes: ["Shael", "Pul", "Mal", "Lum"],
+          base_types: ["Swords", "Axes", "Maces"],
+          required_level: 59,
+          variable_stats: {
+            enhanced_damage: { min: 210, max: 340 },
+            heart_of_wolverine: { min: 14, max: 16 }
+          },
+          fixed_stats: [
+            "30% Chance To Cast Level 20 Bone Spirit On Striking",
+            "Indestructible",
+            "+50% Increased Attack Speed",
+            "+210-340% Enhanced Damage",
+            "+75% Damage To Demons",
+            "+100 To Attack Rating Against Demons",
+            "Prevent Monster Heal",
+            "+10 To Energy",
+            "+10-15 Magic Absorb",
+            "Level 14-16 Heart of Wolverine (20 Charges)",
+            "Level 20 Raven (20 Charges)"
+          ]
+        },
+        {
+          name: "Obedience",
+          runes: ["Hel", "Ko", "Thul", "Eth", "Fal"],
+          base_types: ["Polearms", "Spears"],
+          required_level: 41,
+          variable_stats: {
+            crushing_blow: { min: 40, max: 40 }
+          },
+          fixed_stats: [
+            "30% Chance To Cast Level 21 Enchant When You Kill An Enemy",
+            "+40% Faster Hit Recovery",
+            "+370% Enhanced Damage",
+            "-25% Target Defense",
+            "Adds 3-14 Cold Damage (3 Seconds Duration)",
+            "-25% To Enemy Fire Resistance",
+            "40% Chance of Crushing Blow",
+            "+200-300 Defense",
+            "+10 To Strength",
+            "+10 To Dexterity",
+            "All Resistances +20-30",
+            "Requirements -20%"
+          ]
+        }
+      ];
+      
+      for (const data of runewordData) {
+        runewords.push({
+          name: data.name,
+          game: "diablo2_resurrected",
+          runes: data.runes,
+          base_types: data.base_types,
+          required_level: data.required_level,
+          variable_stats: data.variable_stats,
+          fixed_stats: data.fixed_stats
+        });
+        names.push(data.name);
+      }
+      
+      // Apply limit if needed
+      if (limit > 0 && runewords.length > limit) {
+        runewords = runewords.slice(0, limit);
+        names = names.slice(0, limit);
+      }
+      
+      return { runewords, names };
+    } catch (error) {
+      console.error("Error fetching runewords:", error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching runewords",
+        description: "Failed to fetch runewords data",
+      });
+      return { runewords: [], names: [] };
+    } finally {
+      setIsFetchingWiki(false);
+    }
+  };
+
   const importItems = async () => {
     setIsLoading(true);
     try {
-      // Fetch items from wiki instead of generating samples
-      const { items, names } = await fetchWikiItems(category);
-      
-      if (items.length === 0) {
-        toast({
-          variant: "destructive",
-          title: "No items found",
-          description: `No items found in the ${category} category.`,
+      if (category === "d2r_runewords") {
+        // Import runewords instead of items
+        const { runewords, names } = await fetchWikiRunewords(limit);
+        
+        if (runewords.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "No runewords found",
+            description: "No runewords available to import.",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        let importedCount = 0;
+        let skippedCount = 0;
+        
+        // Import each runeword to the database
+        for (const runeword of runewords) {
+          // Check if runeword already exists (if skipExisting is enabled)
+          if (skipExisting) {
+            const { data: existingRuneword, error: checkError } = await supabase
+              .from('runewords')
+              .select('id')
+              .eq('name', runeword.name)
+              .maybeSingle();
+            
+            if (checkError) {
+              console.error(`Error checking if runeword ${runeword.name} exists:`, checkError);
+              continue;
+            }
+            
+            if (existingRuneword) {
+              skippedCount++;
+              continue;
+            }
+          }
+          
+          // Insert new runeword
+          const { error } = await supabase
+            .from('runewords')
+            .insert(runeword);
+          
+          if (error) {
+            console.error(`Error importing runeword ${runeword.name}:`, error);
+          } else {
+            importedCount++;
+          }
+        }
+        
+        // Set import results
+        setImportResults({
+          imported: importedCount,
+          items: names.slice(0, importedCount)
         });
-        setIsLoading(false);
-        return;
-      }
-      
-      let importedCount = 0;
-      let skippedCount = 0;
-      
-      // Import each item to the database
-      for (const item of items) {
-        // Check if item already exists (if skipExisting is enabled)
-        if (skipExisting) {
-          const { data: existingItem, error: checkError } = await supabase
+        
+        // Invalidate the item stats query to refresh the counts
+        queryClient.invalidateQueries({ queryKey: ["itemStats"] });
+        
+        toast({
+          title: "Import Successful",
+          description: `Imported ${importedCount} runewords${skippedCount > 0 ? ` (skipped ${skippedCount} existing runewords)` : ''}`,
+        });
+      } else {
+        // Regular item import
+        const { items, names } = await fetchWikiItems(category);
+        
+        if (items.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "No items found",
+            description: `No items found in the ${category} category.`,
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        let importedCount = 0;
+        let skippedCount = 0;
+        
+        // Import each item to the database
+        for (const item of items) {
+          // Check if item already exists (if skipExisting is enabled)
+          if (skipExisting) {
+            const { data: existingItem, error: checkError } = await supabase
+              .from('items')
+              .select('id')
+              .eq('name', item.name)
+              .maybeSingle();
+            
+            if (checkError) {
+              console.error(`Error checking if item ${item.name} exists:`, checkError);
+              continue;
+            }
+            
+            if (existingItem) {
+              skippedCount++;
+              continue;
+            }
+          }
+          
+          // Insert new item
+          const { error } = await supabase
             .from('items')
-            .select('id')
-            .eq('name', item.name)
-            .maybeSingle();
+            .insert(item);
           
-          if (checkError) {
-            console.error(`Error checking if item ${item.name} exists:`, checkError);
-            continue;
-          }
-          
-          if (existingItem) {
-            skippedCount++;
-            continue;
+          if (error) {
+            console.error(`Error importing item ${item.name}:`, error);
+          } else {
+            importedCount++;
           }
         }
         
-        // Insert new item
-        const { error } = await supabase
-          .from('items')
-          .insert(item);
+        // Set import results
+        setImportResults({
+          imported: importedCount,
+          items: names.slice(0, importedCount)
+        });
         
-        if (error) {
-          console.error(`Error importing item ${item.name}:`, error);
-        } else {
-          importedCount++;
-        }
+        // Invalidate the item stats query to refresh the counts
+        queryClient.invalidateQueries({ queryKey: ["itemStats"] });
+        
+        toast({
+          title: "Import Successful",
+          description: `Imported ${importedCount} items from ${category}${skippedCount > 0 ? ` (skipped ${skippedCount} existing items)` : ''}`,
+        });
       }
-      
-      // Set import results
-      setImportResults({
-        imported: importedCount,
-        items: names.slice(0, importedCount)
-      });
-      
-      // Invalidate the item stats query to refresh the counts
-      queryClient.invalidateQueries({ queryKey: ["itemStats"] });
-      
-      toast({
-        title: "Import Successful",
-        description: `Imported ${importedCount} items from ${category}${skippedCount > 0 ? ` (skipped ${skippedCount} existing items)` : ''}`,
-      });
     } catch (error: any) {
       console.error("Import error:", error);
       toast({
@@ -503,6 +883,10 @@ const AdminPage = () => {
                   <span>Diablo 4 Items:</span>
                   <span className="font-bold">{itemStats?.d4Count || 0}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span>Runewords:</span>
+                  <span className="font-bold">{itemStats?.runewordsCount || 0}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -533,6 +917,7 @@ const AdminPage = () => {
                       <SelectItem value="runes">Runes</SelectItem>
                       <SelectItem value="unique_jewelry">Unique Jewelry</SelectItem>
                       <SelectItem value="charms">Charms</SelectItem>
+                      <SelectItem value="d2r_runewords">D2R Runewords</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

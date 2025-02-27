@@ -16,6 +16,8 @@ import Profile from "@/pages/Profile";
 import ItemDatabase from "@/pages/ItemDatabase";
 import AdminPage from "@/pages/Admin";
 import NotFound from "@/pages/NotFound";
+import Runewords from "@/pages/Runewords";
+import AddRuneword from "@/pages/AddRuneword";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -29,14 +31,8 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route
-              path="/market"
-              element={
-                <ProtectedRoute>
-                  <Market />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/market" element={<Market />} />
+            <Route path="/market/trade/:id" element={<TradeDetails />} />
             <Route
               path="/market/create"
               element={
@@ -45,27 +41,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/price-check" element={<PriceCheck />} />
+            <Route path="/price-check/:id" element={<PriceCheckDetails />} />
+            <Route path="/items" element={<ItemDatabase />} />
+            <Route path="/runewords" element={<Runewords />} />
             <Route
-              path="/market/trade/:id"
+              path="/runewords/add"
               element={
                 <ProtectedRoute>
-                  <TradeDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/market/price-check"
-              element={
-                <ProtectedRoute>
-                  <PriceCheck />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/market/price-check/:id"
-              element={
-                <ProtectedRoute>
-                  <PriceCheckDetails />
+                  <AddRuneword />
                 </ProtectedRoute>
               }
             />
@@ -77,14 +61,13 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/items" element={<ItemDatabase />} />
-            <Route 
-              path="/admin" 
+            <Route
+              path="/admin"
               element={
                 <ProtectedRoute>
                   <AdminPage />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
