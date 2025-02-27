@@ -29,12 +29,14 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   const [open, setOpen] = useState(false);
   const [customProperties, setCustomProperties] = useState("");
   const [selectedItemType, setSelectedItemType] = useState<string>("");
+  const [selectedItemCategory, setSelectedItemCategory] = useState<string>("");
 
   // Reset search and custom properties when game changes
   useEffect(() => {
     setSearchTerm("");
     setCustomProperties("");
     setSelectedItemType("");
+    setSelectedItemCategory("");
   }, [gameType]);
 
   // Fetch items and runewords for the selected game
@@ -108,14 +110,10 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   const handleItemSelect = (item: ItemSearchResult) => {
     console.log("Selected item:", item);
     setSelectedItemType(item.itemType);
+    setSelectedItemCategory(item.category);
     
-    if (item.itemType === 'normal' || item.itemType === 'magic' || item.itemType === 'rare') {
-      // For base, magic, and rare items, show custom properties input
-      setCustomProperties("");
-    } else {
-      // For unique, set, and runeword items, apply immediately
-      onItemSelect(item.name);
-    }
+    // Always show custom properties for all items to allow for variable stats
+    setCustomProperties("");
     
     setSearchTerm(item.name);
     setOpen(false);
@@ -123,6 +121,57 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
   const handleCustomPropertiesSubmit = () => {
     onItemSelect(searchTerm, customProperties);
+  };
+
+  // Determine if we should show custom properties input
+  const shouldShowCustomProperties = () => {
+    if (!selectedItemType) return false;
+    
+    // Always show for normal/magic/rare items
+    if (['normal', 'magic', 'rare'].includes(selectedItemType)) return true;
+    
+    // Show for runewords to specify the base item used
+    if (selectedItemType === 'runeword') return true;
+    
+    // Show for unique items to allow specifying variable stats
+    if (selectedItemType === 'unique' || selectedItemType === 'set') return true;
+    
+    return false;
+  };
+
+  // Generate placeholder based on item type and category
+  const getPlaceholder = () => {
+    if (selectedItemType === 'normal') {
+      if (['weapon', 'armor'].includes(selectedItemCategory)) {
+        return "Enter item properties (e.g., '4 sockets, 15% Enhanced Defense, Ethereal')";
+      }
+      return "Enter item properties (e.g., 'Superior, +15% Enhanced Defense')";
+    }
+    
+    if (selectedItemType === 'magic' || selectedItemType === 'rare') {
+      return "Enter item affixes (e.g., 'of the Whale (+60-100 Life), 20% Faster Cast Rate')";
+    }
+    
+    if (selectedItemType === 'runeword') {
+      return "Enter base item details (e.g., 'In Archon Plate, 15% Enhanced Defense, 3 sockets')";
+    }
+    
+    if (selectedItemType === 'unique' || selectedItemType === 'set') {
+      return "Enter variable stats (e.g., 'Perfect rolls, 200% Enhanced Damage, Ethereal')";
+    }
+    
+    return "Enter item properties";
+  };
+
+  // Get custom prompt text based on item type
+  const getCustomPropertiesLabel = () => {
+    if (selectedItemType === 'runeword') {
+      return "Base Item Details";
+    }
+    if (selectedItemType === 'unique' || selectedItemType === 'set') {
+      return "Variable Stats";
+    }
+    return "Item Properties";
   };
 
   return (
@@ -166,7 +215,7 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
                     <div>
                       <span className="mr-2">{item.name}</span>
                       <span className="text-xs text-muted-foreground capitalize">
-                        {item.itemType}
+                        {item.itemType === 'normal' ? 'base' : item.itemType}
                       </span>
                     </div>
                   </CommandItem>
@@ -177,28 +226,27 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         </PopoverContent>
       </Popover>
 
-      {/* Custom Properties Input for Base/Magic/Rare Items */}
-      {selectedItemType && (selectedItemType === 'normal' || selectedItemType === 'magic' || selectedItemType === 'rare') && (
+      {/* Custom Properties Input */}
+      {shouldShowCustomProperties() && (
         <div className="space-y-2">
           <Label htmlFor="customProperties">
-            Item Properties 
+            {getCustomPropertiesLabel()}
             <span className="text-sm text-muted-foreground ml-2">
-              (sockets, stats, etc.)
+              (variable stats, sockets, etc.)
             </span>
           </Label>
           <Textarea
             id="customProperties"
             value={customProperties}
             onChange={(e) => setCustomProperties(e.target.value)}
-            placeholder="Enter item properties (e.g., '4 sockets, 15% Enhanced Defense')"
+            placeholder={getPlaceholder()}
             className="min-h-[100px]"
           />
           <Button 
             onClick={handleCustomPropertiesSubmit}
             className="w-full"
-            disabled={!customProperties.trim()}
           >
-            Confirm Properties
+            {customProperties.trim() ? "Confirm Properties" : "Skip Properties"}
           </Button>
         </div>
       )}
