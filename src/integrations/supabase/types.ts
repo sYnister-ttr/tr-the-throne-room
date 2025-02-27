@@ -49,6 +49,7 @@ export type Database = {
           created_at: string
           description: string | null
           game: Database["public"]["Enums"]["game_type"]
+          game_mode: Database["public"]["Enums"]["game_mode_type"]
           id: string
           item_name: string
           ladder_status: Database["public"]["Enums"]["ladder_type"]
@@ -61,6 +62,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           game: Database["public"]["Enums"]["game_type"]
+          game_mode?: Database["public"]["Enums"]["game_mode_type"]
           id?: string
           item_name: string
           ladder_status: Database["public"]["Enums"]["ladder_type"]
@@ -73,6 +75,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           game?: Database["public"]["Enums"]["game_type"]
+          game_mode?: Database["public"]["Enums"]["game_mode_type"]
           id?: string
           item_name?: string
           ladder_status?: Database["public"]["Enums"]["ladder_type"]
