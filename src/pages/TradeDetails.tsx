@@ -28,7 +28,7 @@ const TradeDetails = () => {
   const [offerDetails, setOfferDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: trade } = useQuery({
+  const { data: trade, isLoading: tradeLoading } = useQuery({
     queryKey: ['trade', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,7 +38,7 @@ const TradeDetails = () => {
           profiles (username)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -125,9 +125,11 @@ const TradeDetails = () => {
     }
   };
 
-  if (!trade) return null;
+  if (tradeLoading) return <div>Loading...</div>;
+  if (!trade) return <div>Trade not found</div>;
 
   const isOwner = user?.id === trade.user_id;
+  const canMakeOffer = user && !isOwner && trade.status === 'active';
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,7 +157,7 @@ const TradeDetails = () => {
             </div>
           </div>
 
-          {user && !isOwner && trade.status === 'active' && (
+          {canMakeOffer && (
             <form onSubmit={handleSubmitOffer} className="bg-secondary p-6 rounded-lg space-y-4">
               <h2 className="text-xl font-semibold text-white">Make an Offer</h2>
               <div>
