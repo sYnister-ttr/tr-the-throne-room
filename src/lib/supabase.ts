@@ -8,20 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables");
 }
 
-// Initialize Supabase client with proper options
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
-});
+// Initialize Supabase client with basic options
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Log supabase authentication status on initialization
-supabase.auth.getSession().then(({ data, error }) => {
-  if (error) {
-    console.error("Supabase initialization error:", error);
-  } else {
-    console.log("Supabase initialized with session:", data.session ? "Active" : "None");
-  }
-});
+// Log initialization
+console.log("Supabase client initialized");
