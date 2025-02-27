@@ -1,14 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, PlusCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GameType } from "@/types/items";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ItemSearchResult {
   id: string;
@@ -16,6 +17,11 @@ interface ItemSearchResult {
   itemType: string;
   category: string;
   base_types?: string[];
+}
+
+interface ItemProperty {
+  name: string;
+  value: string;
 }
 
 interface ItemSelectionProps {
@@ -30,16 +36,43 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
   const [customProperties, setCustomProperties] = useState("");
   const [selectedItemType, setSelectedItemType] = useState<string>("");
   const [selectedItemCategory, setSelectedItemCategory] = useState<string>("");
+  const [itemProperties, setItemProperties] = useState<ItemProperty[]>([]);
+  const [newPropertyName, setNewPropertyName] = useState("");
+  const [newPropertyValue, setNewPropertyValue] = useState("");
+  const [isEthereal, setIsEthereal] = useState(false);
 
-  // Reset search and custom properties when game changes
+  const getPropertySuggestions = () => {
+    if (selectedItemType === 'normal') {
+      if (['weapon', 'armor'].includes(selectedItemCategory)) {
+        return ["Sockets", "Enhanced Defense", "Enhanced Damage"];
+      }
+      return ["Quality", "Enhanced Defense"];
+    }
+    
+    if (selectedItemType === 'magic' || selectedItemType === 'rare') {
+      return ["Faster Cast Rate", "Life", "Mana", "Resistance", "Strength", "Dexterity"];
+    }
+    
+    if (selectedItemType === 'runeword') {
+      return ["Base Item", "Defense", "Sockets", "Enhanced Defense"];
+    }
+    
+    if (selectedItemType === 'unique' || selectedItemType === 'set') {
+      return ["Enhanced Defense", "Enhanced Damage", "Resistance", "Life", "Magic Find"];
+    }
+    
+    return [];
+  };
+
   useEffect(() => {
     setSearchTerm("");
     setCustomProperties("");
     setSelectedItemType("");
     setSelectedItemCategory("");
+    setItemProperties([]);
+    setIsEthereal(false);
   }, [gameType]);
 
-  // Fetch items and runewords for the selected game
   const { data: searchResults = [], isLoading } = useQuery({
     queryKey: ["items-runewords-search", gameType, searchTerm],
     queryFn: async () => {
@@ -50,7 +83,6 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
       }
       
       try {
-        // Fetch items
         const { data: items = [], error: itemsError } = await supabase
           .from("items")
           .select("id, name, category, rarity")
@@ -65,7 +97,6 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
         console.log("Items found:", items.length);
 
-        // Fetch runewords
         const { data: runewords = [], error: runewordsError } = await supabase
           .from("runewords")
           .select("id, name, base_types")
@@ -80,7 +111,6 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
 
         console.log("Runewords found:", runewords.length);
 
-        // Combine and format results
         const formattedItems = items.map((item: any) => ({
           id: item.id,
           name: item.name,
@@ -112,66 +142,73 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
     setSelectedItemType(item.itemType);
     setSelectedItemCategory(item.category);
     
-    // Always show custom properties for all items to allow for variable stats
-    setCustomProperties("");
+    setItemProperties([]);
+    setIsEthereal(false);
     
     setSearchTerm(item.name);
     setOpen(false);
+    
+    if (item.itemType === 'runeword') {
+      setItemProperties([{ name: "Base Item", value: "" }]);
+    }
+    
+    if (['weapon', 'armor'].includes(item.category) && 
+        (item.itemType === 'normal' || item.itemType === 'magic' || item.itemType === 'rare')) {
+      setItemProperties([{ name: "Sockets", value: "" }]);
+    }
   };
 
-  const handleCustomPropertiesSubmit = () => {
-    onItemSelect(searchTerm, customProperties);
+  const addProperty = () => {
+    if (!newPropertyName.trim()) return;
+    
+    setItemProperties([...itemProperties, { 
+      name: newPropertyName, 
+      value: newPropertyValue 
+    }]);
+    
+    setNewPropertyName("");
+    setNewPropertyValue("");
   };
 
-  // Determine if we should show custom properties input
-  const shouldShowCustomProperties = () => {
-    if (!selectedItemType) return false;
-    
-    // Always show for normal/magic/rare items
-    if (['normal', 'magic', 'rare'].includes(selectedItemType)) return true;
-    
-    // Show for runewords to specify the base item used
-    if (selectedItemType === 'runeword') return true;
-    
-    // Show for unique items to allow specifying variable stats
-    if (selectedItemType === 'unique' || selectedItemType === 'set') return true;
-    
-    return false;
+  const removeProperty = (index: number) => {
+    const updatedProperties = [...itemProperties];
+    updatedProperties.splice(index, 1);
+    setItemProperties(updatedProperties);
   };
 
-  // Generate placeholder based on item type and category
-  const getPlaceholder = () => {
-    if (selectedItemType === 'normal') {
-      if (['weapon', 'armor'].includes(selectedItemCategory)) {
-        return "Enter item properties (e.g., '4 sockets, 15% Enhanced Defense, Ethereal')";
-      }
-      return "Enter item properties (e.g., 'Superior, +15% Enhanced Defense')";
-    }
-    
-    if (selectedItemType === 'magic' || selectedItemType === 'rare') {
-      return "Enter item affixes (e.g., 'of the Whale (+60-100 Life), 20% Faster Cast Rate')";
-    }
-    
-    if (selectedItemType === 'runeword') {
-      return "Enter base item details (e.g., 'In Archon Plate, 15% Enhanced Defense, 3 sockets')";
-    }
-    
-    if (selectedItemType === 'unique' || selectedItemType === 'set') {
-      return "Enter variable stats (e.g., 'Perfect rolls, 200% Enhanced Damage, Ethereal')";
-    }
-    
-    return "Enter item properties";
+  const updatePropertyName = (index: number, name: string) => {
+    const updatedProperties = [...itemProperties];
+    updatedProperties[index].name = name;
+    setItemProperties(updatedProperties);
   };
 
-  // Get custom prompt text based on item type
-  const getCustomPropertiesLabel = () => {
-    if (selectedItemType === 'runeword') {
-      return "Base Item Details";
+  const updatePropertyValue = (index: number, value: string) => {
+    const updatedProperties = [...itemProperties];
+    updatedProperties[index].value = value;
+    setItemProperties(updatedProperties);
+  };
+
+  const handlePropertiesSubmit = () => {
+    let propertyText = itemProperties
+      .filter(prop => prop.name && prop.value)
+      .map(prop => `${prop.name}: ${prop.value}`)
+      .join('\n');
+    
+    if (isEthereal) {
+      propertyText = `Ethereal\n${propertyText}`;
     }
-    if (selectedItemType === 'unique' || selectedItemType === 'set') {
-      return "Variable Stats";
-    }
-    return "Item Properties";
+    
+    onItemSelect(searchTerm, propertyText);
+  };
+
+  const selectSuggestion = (suggestion: string) => {
+    setNewPropertyName(suggestion);
+  };
+
+  const shouldShowProperties = () => {
+    return selectedItemType && [
+      'normal', 'magic', 'rare', 'unique', 'set', 'runeword'
+    ].includes(selectedItemType);
   };
 
   return (
@@ -226,27 +263,105 @@ const ItemSelection = ({ gameType, onItemSelect, selectedItem }: ItemSelectionPr
         </PopoverContent>
       </Popover>
 
-      {/* Custom Properties Input */}
-      {shouldShowCustomProperties() && (
-        <div className="space-y-2">
-          <Label htmlFor="customProperties">
-            {getCustomPropertiesLabel()}
-            <span className="text-sm text-muted-foreground ml-2">
-              (variable stats, sockets, etc.)
-            </span>
-          </Label>
-          <Textarea
-            id="customProperties"
-            value={customProperties}
-            onChange={(e) => setCustomProperties(e.target.value)}
-            placeholder={getPlaceholder()}
-            className="min-h-[100px]"
-          />
+      {shouldShowProperties() && (
+        <div className="space-y-4 p-4 border rounded-md">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Item Properties</h3>
+            {(['weapon', 'armor'].includes(selectedItemCategory) || selectedItemType === 'runeword') && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="ethereal" className="text-sm">Ethereal</Label>
+                <input 
+                  type="checkbox" 
+                  id="ethereal"
+                  checked={isEthereal}
+                  onChange={(e) => setIsEthereal(e.target.checked)}
+                  className="h-4 w-4"
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            {itemProperties.map((prop, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <Input
+                  value={prop.name}
+                  onChange={(e) => updatePropertyName(index, e.target.value)}
+                  placeholder="Property name"
+                  className="flex-1"
+                />
+                <Input
+                  value={prop.value}
+                  onChange={(e) => updatePropertyValue(index, e.target.value)}
+                  placeholder="Value"
+                  className="flex-1"
+                />
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => removeProperty(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Add Property</Label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {getPropertySuggestions().map((suggestion, i) => (
+                <Button 
+                  key={i} 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => selectSuggestion(suggestion)}
+                  className="text-xs"
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Input
+                value={newPropertyName}
+                onChange={(e) => setNewPropertyName(e.target.value)}
+                placeholder="Property name"
+                className="flex-1"
+              />
+              <Input
+                value={newPropertyValue}
+                onChange={(e) => setNewPropertyValue(e.target.value)}
+                placeholder="Value"
+                className="flex-1"
+              />
+              <Button 
+                variant="outline" 
+                onClick={addProperty}
+                className="shrink-0"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="customProperties">Additional Details</Label>
+            <Textarea
+              id="customProperties"
+              value={customProperties}
+              onChange={(e) => setCustomProperties(e.target.value)}
+              placeholder="Any other details you want to include..."
+              className="min-h-[60px]"
+            />
+          </div>
+
           <Button 
-            onClick={handleCustomPropertiesSubmit}
+            onClick={handlePropertiesSubmit}
             className="w-full"
           >
-            {customProperties.trim() ? "Confirm Properties" : "Skip Properties"}
+            Confirm Properties
           </Button>
         </div>
       )}
