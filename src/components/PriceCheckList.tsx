@@ -32,11 +32,12 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
 
   const fetchPriceChecks = async () => {
     try {
+      console.log("Fetching price checks for userId:", userId);
       let query = supabase
         .from("price_checks")
         .select(`
           *,
-          profiles (
+          profiles!price_checks_user_id_fkey (
             username
           )
         `)
@@ -48,7 +49,12 @@ const PriceCheckList = ({ userId }: { userId?: string }) => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Price checks query error:", error);
+        throw error;
+      }
+      
+      console.log("Fetched price checks:", data);
       setPriceChecks(data || []);
     } catch (error: any) {
       console.error("Error fetching price checks:", error);
