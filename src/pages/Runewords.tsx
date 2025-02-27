@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { BookOpen, RefreshCw } from "lucide-react";
 
 const Runewords = () => {
   const [gameFilter, setGameFilter] = useState<GameType>("diablo2_resurrected");
@@ -123,8 +124,12 @@ const Runewords = () => {
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
-          <Button onClick={testDirectFetch} variant="outline">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-amber-500" />
+            <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
+          </div>
+          <Button onClick={testDirectFetch} variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
             Test Connection
           </Button>
         </div>
