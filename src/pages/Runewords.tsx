@@ -2,21 +2,24 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, checkTableAccess } from "@/lib/supabase";
-import { Runeword, GameType } from "@/types/items";
 import Navigation from "@/components/Navigation";
 import RunewordCard from "@/components/RunewordCard";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Runeword } from "@/types/items";
 
 const Runewords = () => {
-  const [gameFilter, setGameFilter] = useState<GameType>("diablo2_resurrected");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [gameFilter, setGameFilter] = useState<string>("diablo2_resurrected");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
   const [baseTypeFilter, setBaseTypeFilter] = useState<string>("");
   const [accessError, setAccessError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function checkAccess() {
@@ -38,10 +41,13 @@ const Runewords = () => {
       
       let query = supabase
         .from("runewords")
-        .select("*")
-        .eq("game", gameFilter);
+        .select("*");
       
-      if (searchTerm) {
+      if (gameFilter && gameFilter !== "all") {
+        query = query.eq("game", gameFilter);
+      }
+      
+      if (searchTerm.trim() !== "") {
         query = query.ilike("name", `%${searchTerm}%`);
       }
       
@@ -49,8 +55,9 @@ const Runewords = () => {
         query = query.lte("required_level", levelFilter);
       }
       
-      if (baseTypeFilter) {
-        query = query.contains("base_types", [baseTypeFilter]);
+      if (baseTypeFilter.trim() !== "") {
+        // This assumes base_types is an array in the database
+        query = query.contains("base_types", [baseTypeFilter.trim()]);
       }
       
       const { data, error } = await query.order("name");
@@ -73,6 +80,12 @@ const Runewords = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">Runewords Database</h1>
+          <Button 
+            onClick={() => navigate("/runewords/add")}
+            className="bg-diablo-600 hover:bg-diablo-700"
+          >
+            Add Runeword
+          </Button>
         </div>
         
         {accessError && (
@@ -97,7 +110,7 @@ const Runewords = () => {
                 <Label htmlFor="game">Game</Label>
                 <Select
                   value={gameFilter}
-                  onValueChange={(value) => setGameFilter(value as GameType)}
+                  onValueChange={(value) => setGameFilter(value)}
                 >
                   <SelectTrigger id="game" className="bg-background">
                     <SelectValue placeholder="Select game" />
@@ -149,10 +162,13 @@ const Runewords = () => {
           
           <div className="lg:col-span-3">
             {isLoading ? (
-              <div className="text-center py-8">Loading runewords...</div>
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                <p>Loading runewords...</p>
+              </div>
             ) : runewords.length === 0 && !accessError ? (
               <div className="text-center py-8">
-                No runewords found with the current filters.
+                <p className="text-gray-400 mb-4">No runewords found with the current filters.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
