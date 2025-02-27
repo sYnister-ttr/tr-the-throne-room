@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -86,6 +85,19 @@ const Admin = () => {
   });
 
   useEffect(() => {
+    console.log("Admin page - User:", user);
+    console.log("Admin page - isAdmin:", isAdmin);
+    
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please sign in to access the admin panel."
+      });
+      navigate("/login");
+      return;
+    }
+    
     if (!isAdmin) {
       toast({
         variant: "destructive",
@@ -99,7 +111,7 @@ const Admin = () => {
     fetchUsers();
     fetchPermissions();
     fetchSiteStats();
-  }, [isAdmin, navigate]);
+  }, [isAdmin, navigate, user]);
 
   useEffect(() => {
     if (users.length > 0) {
@@ -110,7 +122,6 @@ const Admin = () => {
   const filterUsers = () => {
     let filtered = [...users];
     
-    // Filter by search term
     if (userSearch) {
       const searchLower = userSearch.toLowerCase();
       filtered = filtered.filter(user => 
@@ -119,7 +130,6 @@ const Admin = () => {
       );
     }
     
-    // Filter by role
     if (roleFilter !== "all") {
       filtered = filtered.filter(user => user.role === roleFilter);
     }
@@ -130,14 +140,12 @@ const Admin = () => {
   const fetchSiteStats = async () => {
     setStatsLoading(true);
     try {
-      // Get total users count
       const { count: totalUsers, error: usersError } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
       if (usersError) throw usersError;
 
-      // Get active trades count
       const { count: tradesCount, error: tradesError } = await supabase
         .from('trades')
         .select('*', { count: 'exact', head: true })
@@ -145,14 +153,12 @@ const Admin = () => {
 
       if (tradesError) throw tradesError;
 
-      // Get price checks count
       const { count: priceChecksCount, error: priceChecksError } = await supabase
         .from('price_checks')
         .select('*', { count: 'exact', head: true });
 
       if (priceChecksError) throw priceChecksError;
 
-      // Get users created today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -163,7 +169,6 @@ const Admin = () => {
 
       if (newUsersError) throw newUsersError;
 
-      // Get active users (logged in within last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
@@ -406,7 +411,6 @@ const Admin = () => {
       case 'admin':
         return <Badge variant="destructive" className="capitalize">{role}</Badge>;
       case 'moderator':
-        // FIX: Changed from "warning" (which doesn't exist) to "secondary" with custom style
         return <Badge variant="secondary" className="bg-yellow-500 text-white capitalize">{role}</Badge>;
       default:
         return <Badge variant="secondary" className="capitalize">{role}</Badge>;
@@ -458,7 +462,6 @@ const Admin = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Dashboard Content */}
           <TabsContent value="dashboard" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
@@ -588,7 +591,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Users Content */}
           <TabsContent value="users" className="space-y-4">
             <Card>
               <CardHeader>
