@@ -13,6 +13,13 @@ const HeroSection = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-background/50 to-background" />
       <div className="relative z-20 container mx-auto px-4 h-full flex items-center justify-center">
         <div className="max-w-3xl animate-fade-in text-center">
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/10d5fef3-bf96-438c-bf7d-101b20016f70.png" 
+              alt="TR The Throne Room Logo" 
+              className="w-60 md:w-80 h-auto"
+            />
+          </div>
           <h1 className="text-5xl md:text-7xl font-bold text-diablo-500 mb-6 drop-shadow-[0_0_15px_rgba(255,61,61,0.3)]">
             Welcome to TR The Throne Room
           </h1>
