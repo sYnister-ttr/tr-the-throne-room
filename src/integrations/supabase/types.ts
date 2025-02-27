@@ -36,6 +36,51 @@ export type Database = {
         }
         Relationships: []
       }
+      items: {
+        Row: {
+          base_type: string | null
+          category: string
+          created_at: string
+          description: string | null
+          game: string
+          id: string
+          image_url: string | null
+          name: string
+          rarity: string
+          required_level: number
+          stats: string[]
+          updated_at: string
+        }
+        Insert: {
+          base_type?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          game: string
+          id?: string
+          image_url?: string | null
+          name: string
+          rarity: string
+          required_level?: number
+          stats?: string[]
+          updated_at?: string
+        }
+        Update: {
+          base_type?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          game?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          rarity?: string
+          required_level?: number
+          stats?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_check_responses: {
         Row: {
           comment: string | null
