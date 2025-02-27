@@ -20,10 +20,10 @@ const HeroSection = () => {
               className="w-60 md:w-80 h-auto"
             />
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-diablo-500 mb-6 drop-shadow-[0_0_15px_rgba(255,61,61,0.3)] uppercase tracking-wider">
+          <h1 className="text-4xl md:text-6xl font-bold text-diablo-500 mb-6 drop-shadow-[0_0_15px_rgba(255,61,61,0.3)] uppercase tracking-wider">
             Welcome to TR The Throne Room
           </h1>
-          <p className="text-xl md:text-2xl text-gray-200 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
             Your ultimate destination for Diablo trading and community. Join fellow players in the pursuit of legendary items and wealth.
           </p>
           <Button
