@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 interface TradeCardProps {
-  trade: Trade & {
-    profiles: {
-      username: string;
-    };
-  };
+  trade: Trade;
 }
 
 const TradeCard = ({ trade }: TradeCardProps) => {
@@ -39,7 +35,7 @@ const TradeCard = ({ trade }: TradeCardProps) => {
       </CardContent>
       <CardFooter className="flex justify-between items-center">
         <span className="text-sm text-gray-400">
-          by {trade.profiles.username}
+          by {trade.profiles?.username || 'Unknown User'}
         </span>
         <Button
           onClick={() => navigate(`/market/trade/${trade.id}`)}

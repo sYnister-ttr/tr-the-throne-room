@@ -17,6 +17,9 @@ export interface Trade {
   status: string;
   created_at: string;
   updated_at: string;
+  profiles?: {
+    username: string;
+  };
 }
 
 export interface TradeOffer {
