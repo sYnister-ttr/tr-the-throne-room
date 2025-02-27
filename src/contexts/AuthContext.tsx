@@ -69,7 +69,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         // Create a new object with the User properties and treat it as UserWithRole
-        const userWithoutRole: UserWithRole = { ...session.user };
+        const userWithoutRole = { 
+          ...session.user,
+          role: undefined as unknown as UserRole // Initialize with undefined but keep type compatible
+        } as UserWithRole;
         setUser(userWithoutRole);
         
         fetchUserRole(userWithoutRole.id).then(role => {
@@ -91,7 +94,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         // Create a new object with the User properties and treat it as UserWithRole
-        const userWithoutRole: UserWithRole = { ...session.user };
+        const userWithoutRole = { 
+          ...session.user,
+          role: undefined as unknown as UserRole // Initialize with undefined but keep type compatible
+        } as UserWithRole;
         setUser(userWithoutRole);
         
         const role = await fetchUserRole(userWithoutRole.id);
