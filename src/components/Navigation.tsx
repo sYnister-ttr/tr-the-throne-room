@@ -1,16 +1,32 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, UserCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, signOut, isAdmin, isModerator } = useAuth();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+    setIsOpen(false);
   };
 
   return (
@@ -52,26 +68,61 @@ const Navigation = () => {
                 >
                   Runewords
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="text-diablo-500 hover:text-diablo-400 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Admin
+                  </Link>
+                )}
               </div>
             </div>
           </div>
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
-                  onClick={() => navigate("/login")}
-                >
-                  Sign In
-                </Button>
-                <Button
-                  className="bg-diablo-500 hover:bg-diablo-700"
-                  onClick={() => navigate("/register")}
-                >
-                  Sign Up
-                </Button>
-              </div>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <UserCircle className="h-6 w-6 text-diablo-500" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
+                      Profile
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => navigate("/admin")}>
+                        Admin Panel
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
+                    onClick={() => navigate("/login")}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    className="bg-diablo-500 hover:bg-diablo-700"
+                    onClick={() => navigate("/register")}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           <div className="-mr-2 flex md:hidden">
@@ -122,30 +173,74 @@ const Navigation = () => {
             >
               Runewords
             </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="text-diablo-500 hover:text-diablo-400 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={toggleMenu}
+              >
+                Admin
+              </Link>
+            )}
           </div>
           <Separator />
           <div className="pt-4 pb-3 border-gray-800">
             <div className="flex items-center px-5">
               <div className="flex flex-col w-full gap-2">
-                <Button
-                  variant="outline"
-                  className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
-                  onClick={() => {
-                    navigate("/login");
-                    toggleMenu();
-                  }}
-                >
-                  Sign In
-                </Button>
-                <Button
-                  className="bg-diablo-500 hover:bg-diablo-700 w-full"
-                  onClick={() => {
-                    navigate("/register");
-                    toggleMenu();
-                  }}
-                >
-                  Sign Up
-                </Button>
+                {user ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
+                      onClick={() => {
+                        navigate("/profile");
+                        toggleMenu();
+                      }}
+                    >
+                      Profile
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
+                        onClick={() => {
+                          navigate("/admin");
+                          toggleMenu();
+                        }}
+                      >
+                        Admin Panel
+                      </Button>
+                    )}
+                    <Button
+                      className="bg-diablo-500 hover:bg-diablo-700 w-full"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
+                      onClick={() => {
+                        navigate("/login");
+                        toggleMenu();
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      className="bg-diablo-500 hover:bg-diablo-700 w-full"
+                      onClick={() => {
+                        navigate("/register");
+                        toggleMenu();
+                      }}
+                    >
+                      Sign Up
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
