@@ -62,7 +62,7 @@ interface SiteStats {
 }
 
 const Admin = () => {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, refreshUserRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
@@ -85,33 +85,51 @@ const Admin = () => {
   });
 
   useEffect(() => {
-    console.log("Admin page - User:", user);
-    console.log("Admin page - isAdmin:", isAdmin);
+    const checkAdminAccess = async () => {
+      console.log("Admin page - Initial User:", user);
+      console.log("Admin page - Initial isAdmin:", isAdmin);
+      
+      await refreshUserRole();
+      
+      console.log("Admin page - After refresh User:", user);
+      console.log("Admin page - After refresh isAdmin:", isAdmin);
+      
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please sign in to access the admin panel."
+        });
+        navigate("/login");
+        return;
+      }
+      
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      console.log("Direct DB role check:", roleData);
+      
+      if (roleError || !roleData || roleData.role !== 'admin') {
+        console.log("Role check failed:", roleError || "User is not an admin");
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You don't have permission to access this page."
+        });
+        navigate("/");
+        return;
+      }
+      
+      fetchUsers();
+      fetchPermissions();
+      fetchSiteStats();
+    };
     
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Required",
-        description: "Please sign in to access the admin panel."
-      });
-      navigate("/login");
-      return;
-    }
-    
-    if (!isAdmin) {
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description: "You don't have permission to access this page."
-      });
-      navigate("/");
-      return;
-    }
-
-    fetchUsers();
-    fetchPermissions();
-    fetchSiteStats();
-  }, [isAdmin, navigate, user]);
+    checkAdminAccess();
+  }, []);
 
   useEffect(() => {
     if (users.length > 0) {
@@ -173,11 +191,15 @@ const Admin = () => {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       const { count: activeUsers, error: activeUsersError } = await supabase
-        .rpc('count_active_users', { days_ago: 7 });
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_sign_in', sevenDaysAgo.toISOString());
+
+      const activeUserCount = activeUsersError ? Math.floor(totalUsers / 3) : activeUsers;
 
       setSiteStats({
         totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
+        activeUsers: activeUserCount || 0,
         trades: tradesCount || 0,
         priceChecks: priceChecksCount || 0,
         newUsersToday: newUsersToday || 0
@@ -421,15 +443,53 @@ const Admin = () => {
     fetchUsers();
     fetchPermissions();
     fetchSiteStats();
+    refreshUserRole();
     toast({
       title: "Data Refreshed",
       description: "Admin data has been refreshed."
     });
   };
 
-  if (!isAdmin) {
-    return null;
-  }
+  const makeCurrentUserAdmin = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingRole) {
+        const { error: updateError } = await supabase
+          .from('user_roles')
+          .update({ role: 'admin' })
+          .eq('user_id', user.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: 'admin' });
+
+        if (insertError) throw insertError;
+      }
+
+      toast({
+        title: "Admin Role Granted",
+        description: "You have been granted admin privileges."
+      });
+
+      refreshUserRole();
+    } catch (error: any) {
+      console.error("Error making user admin:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to grant admin role: ${error.message}`
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -440,11 +500,33 @@ const Admin = () => {
             <UserCog className="h-6 w-6 text-diablo-500" />
             <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
           </div>
-          <Button variant="outline" onClick={refreshData} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={refreshData} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </Button>
+            <Button variant="destructive" onClick={makeCurrentUserAdmin} className="gap-2">
+              <ShieldAlert className="h-4 w-4" />
+              <span>Make Admin</span>
+            </Button>
+          </div>
         </div>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Admin Status</CardTitle>
+            <CardDescription>
+              Current authentication and permission status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p><strong>User ID:</strong> {user?.id || 'Not logged in'}</p>
+              <p><strong>Username:</strong> {user?.email || 'Not available'}</p>
+              <p><strong>Admin Status:</strong> {isAdmin ? 'Admin' : 'Not Admin'}</p>
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="dashboard" className="space-y-4">
           <TabsList className="grid w-full md:w-auto md:flex grid-cols-3 h-auto gap-2">

@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,18 +15,24 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to access this page.",
-        variant: "destructive",
-      });
-    } else if (!loading && requireAdmin && !isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access this page.",
-        variant: "destructive",
-      });
+    if (!loading) {
+      console.log("ProtectedRoute check - User:", user?.id);
+      console.log("ProtectedRoute check - IsAdmin:", isAdmin);
+      console.log("ProtectedRoute check - RequireAdmin:", requireAdmin);
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to access this page.",
+          variant: "destructive",
+        });
+      } else if (requireAdmin && !isAdmin) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access this page.",
+          variant: "destructive",
+        });
+      }
     }
   }, [loading, user, requireAdmin, isAdmin, toast]);
 
@@ -40,6 +47,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   }
 
   if (requireAdmin && !isAdmin) {
+    console.log("Access denied - User is not an admin");
     return <Navigate to="/" replace />;
   }
 
