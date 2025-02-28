@@ -53,14 +53,14 @@ const AdminUsers = () => {
   // Refresh user role when component mounts
   useEffect(() => {
     const loadUserRole = async () => {
-      console.log("AdminUsers: Loading user role...");
-      await refreshUserRole();
-      console.log("AdminUsers: User role refreshed. isAdmin:", isAdmin);
+      if (user) {
+        console.log("AdminUsers: Loading user role...");
+        await refreshUserRole();
+        console.log("AdminUsers: User role refreshed. isAdmin:", isAdmin);
+      }
     };
     
-    if (user) {
-      loadUserRole();
-    }
+    loadUserRole();
   }, [user, refreshUserRole, isAdmin]);
 
   // Redirect non-admin users
