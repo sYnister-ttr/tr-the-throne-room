@@ -25,8 +25,44 @@ interface User {
 const UserManagementTable = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Debug logging to help diagnose issues
+    console.log("Current user:", user);
+    console.log("Is admin?", isAdmin);
+    
+    if (user) {
+      // Direct database query to check user role - for debugging
+      const checkAdminStatus = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+            
+          console.log("Direct DB role check:", data, error);
+          
+          if (data && data.role === 'admin') {
+            console.log("✅ User has admin role in database");
+            // Show toast for immediate feedback
+            toast({
+              title: "Admin access confirmed",
+              description: "You have admin privileges in the database",
+            });
+          } else {
+            console.log("❌ User does not have admin role in database");
+          }
+        } catch (e) {
+          console.error("Error checking admin status:", e);
+        }
+      };
+      
+      checkAdminStatus();
+    }
+  }, [user, isAdmin, toast]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -131,8 +167,11 @@ const UserManagementTable = () => {
   if (!isAdmin) {
     return (
       <div className="p-6 bg-card rounded-md shadow">
-        <p className="text-center text-muted-foreground">
+        <p className="text-center text-muted-foreground mb-4">
           You don't have permission to view this page.
+        </p>
+        <p className="text-center text-sm text-muted-foreground">
+          Current user ID: {user?.id || "Not logged in"}
         </p>
       </div>
     );
