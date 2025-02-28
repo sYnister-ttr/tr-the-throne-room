@@ -61,15 +61,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
+      setLoading(true);
       const role = await fetchUserRole(user.id);
+      
       if (role) {
+        console.log("Updated user role to:", role);
         setUser({ ...user, role: role as UserRole });
         setIsAdmin(role === 'admin');
         setIsModerator(role === 'moderator' || role === 'admin');
-        console.log("User role refreshed:", role);
       }
     } catch (error) {
       console.error("Error refreshing user role:", error);
+    } finally {
+      setLoading(false);
     }
   };
 

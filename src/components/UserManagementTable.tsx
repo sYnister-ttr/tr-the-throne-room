@@ -25,87 +25,59 @@ interface User {
 const UserManagementTable = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, refreshUserRole } = useAuth();
   const { toast } = useToast();
 
+  // Make sure we refresh the user's role when the component mounts
   useEffect(() => {
-    // Debug logging to help diagnose issues
-    console.log("Current user:", user);
-    console.log("Is admin?", isAdmin);
-    
-    if (user) {
-      // Direct database query to check user role - for debugging
-      const checkAdminStatus = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .maybeSingle();
-            
-          console.log("Direct DB role check:", data, error);
-          
-          if (data && data.role === 'admin') {
-            console.log("✅ User has admin role in database");
-            // Show toast for immediate feedback
-            toast({
-              title: "Admin access confirmed",
-              description: "You have admin privileges in the database",
-            });
-          } else {
-            console.log("❌ User does not have admin role in database");
-            
-            // Auto-assign admin role if none exists
-            const { error: insertError } = await supabase
-              .from('user_roles')
-              .upsert({ user_id: user.id, role: 'admin' });
-              
-            if (!insertError) {
-              console.log("🔧 Automatically assigned admin role");
-              toast({
-                title: "Admin role assigned",
-                description: "You have been assigned admin privileges",
-              });
-              // Reload the page to apply the new role
-              setTimeout(() => window.location.reload(), 1500);
-            } else {
-              console.error("Error assigning admin role:", insertError);
-            }
-          }
-        } catch (e) {
-          console.error("Error checking admin status:", e);
-        }
-      };
-      
-      checkAdminStatus();
-    }
-  }, [user, isAdmin, toast]);
+    refreshUserRole();
+  }, [refreshUserRole]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Use direct query approach which is most reliable
-      const { data, error } = await supabase
-        .from('auth.users')
-        .select('id, email, last_sign_in_at');
-      
-      if (error) {
-        console.error("Error fetching users:", error);
-        throw error;
-      }
-      
-      if (data) {
-        console.log("Fetched users:", data);
+      // First, check if the function exists and can be called
+      const { data: functionData, error: functionError } = await supabase
+        .rpc('get_users_with_details');
         
-        // Fetch roles for each user
+      if (!functionError && functionData) {
+        console.log("Successfully fetched users via RPC function:", functionData);
+        
+        // Process the data from the function
         const usersWithRoles = await Promise.all(
-          data.map(async (user: User) => {
-            const role = await getUserRole(user.id);
-            return { ...user, role };
+          functionData.map(async (userData: any) => {
+            const role = await getUserRole(userData.id);
+            return { ...userData, role };
           })
         );
         
         setUsers(usersWithRoles);
+      } else {
+        console.log("Function error or not available:", functionError);
+        
+        // Fallback to direct query
+        const { data, error } = await supabase
+          .from('auth.users')
+          .select('id, email, last_sign_in_at');
+        
+        if (error) {
+          console.error("Error fetching users:", error);
+          throw error;
+        }
+        
+        if (data) {
+          console.log("Fetched users via direct query:", data);
+          
+          // Fetch roles for each user
+          const usersWithRoles = await Promise.all(
+            data.map(async (user: User) => {
+              const role = await getUserRole(user.id);
+              return { ...user, role };
+            })
+          );
+          
+          setUsers(usersWithRoles);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching users:", error);
@@ -160,6 +132,11 @@ const UserManagementTable = () => {
         title: "Success",
         description: `User role updated to ${newRole}`,
       });
+      
+      // If changing the current user's role, refresh their role
+      if (user && userId === user.id) {
+        await refreshUserRole();
+      }
       
       // Refresh users list
       fetchUsers();
