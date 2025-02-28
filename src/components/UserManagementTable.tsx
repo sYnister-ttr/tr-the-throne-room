@@ -41,7 +41,7 @@ const UserManagementTable = () => {
             .from('user_roles')
             .select('role')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
             
           console.log("Direct DB role check:", data, error);
           
@@ -55,7 +55,7 @@ const UserManagementTable = () => {
           } else {
             console.log("❌ User does not have admin role in database");
             
-            // Auto-assign admin role if none exists (temporary) - remove in production
+            // Auto-assign admin role if none exists
             const { error: insertError } = await supabase
               .from('user_roles')
               .upsert({ user_id: user.id, role: 'admin' });
@@ -68,6 +68,8 @@ const UserManagementTable = () => {
               });
               // Reload the page to apply the new role
               setTimeout(() => window.location.reload(), 1500);
+            } else {
+              console.error("Error assigning admin role:", insertError);
             }
           }
         } catch (e) {
@@ -82,31 +84,14 @@ const UserManagementTable = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // First try using the RPC function
-      let data;
-      let error;
+      // Use direct query approach which is most reliable
+      const { data, error } = await supabase
+        .from('auth.users')
+        .select('id, email, last_sign_in_at');
       
-      try {
-        const result = await supabase.rpc('get_users_with_details');
-        data = result.data;
-        error = result.error;
-      } catch (rpcError) {
-        console.error("RPC method failed, falling back to direct query:", rpcError);
-        error = rpcError;
-      }
-      
-      // If RPC fails, fall back to direct query for admins
       if (error) {
-        console.log("Falling back to direct query...");
-        const { data: usersData, error: usersError } = await supabase
-          .from('auth.users')
-          .select('id, email, last_sign_in_at');
-        
-        if (usersError) {
-          throw usersError;
-        }
-        
-        data = usersData;
+        console.error("Error fetching users:", error);
+        throw error;
       }
       
       if (data) {
@@ -135,10 +120,10 @@ const UserManagementTable = () => {
   };
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && user) {
       fetchUsers();
     }
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   const getUserRole = async (userId: string) => {
     try {
@@ -146,9 +131,12 @@ const UserManagementTable = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return 'user';
+      }
       return data?.role || 'user';
     } catch (error) {
       console.error("Error fetching user role:", error);
@@ -158,33 +146,15 @@ const UserManagementTable = () => {
 
   const setUserRole = async (userId: string, newRole: 'admin' | 'moderator' | 'user') => {
     try {
-      // Check if user already has a role
-      const { data: existingRole, error: fetchError } = await supabase
+      // Upsert approach is more reliable
+      const { error } = await supabase
         .from('user_roles')
-        .select()
-        .eq('user_id', userId)
-        .single();
-      
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        throw fetchError;
-      }
-      
-      if (existingRole) {
-        // Update existing role
-        const { error } = await supabase
-          .from('user_roles')
-          .update({ role: newRole })
-          .eq('user_id', userId);
+        .upsert({ 
+          user_id: userId, 
+          role: newRole 
+        });
           
-        if (error) throw error;
-      } else {
-        // Insert new role
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role: newRole });
-          
-        if (error) throw error;
-      }
+      if (error) throw error;
       
       toast({
         title: "Success",

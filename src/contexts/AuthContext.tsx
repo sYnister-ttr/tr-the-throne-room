@@ -34,13 +34,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isModerator, setIsModerator] = useState(false);
 
   const fetchUserRole = async (userId: string) => {
+    if (!userId) return null;
+    
     try {
       console.log("Fetching role for user ID:", userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error("Error fetching user role:", error);
@@ -58,11 +60,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUserRole = async () => {
     if (!user) return;
     
-    const role = await fetchUserRole(user.id);
-    if (role) {
-      setUser({ ...user, role: role as UserRole });
-      setIsAdmin(role === 'admin');
-      setIsModerator(role === 'moderator' || role === 'admin');
+    try {
+      const role = await fetchUserRole(user.id);
+      if (role) {
+        setUser({ ...user, role: role as UserRole });
+        setIsAdmin(role === 'admin');
+        setIsModerator(role === 'moderator' || role === 'admin');
+        console.log("User role refreshed:", role);
+      }
+    } catch (error) {
+      console.error("Error refreshing user role:", error);
     }
   };
 
@@ -70,6 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Initial auth state check
     const checkSession = async () => {
       try {
+        setLoading(true);
         const { data } = await supabase.auth.getSession();
         
         if (data.session?.user) {
@@ -108,6 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.id);
         
         if (session?.user) {
+          setLoading(true);
           const userWithoutRole = { 
             ...session.user,
             role: undefined as unknown as UserRole
@@ -121,13 +130,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
           }
+          setLoading(false);
         } else {
           setUser(null);
           setIsAdmin(false);
           setIsModerator(false);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 

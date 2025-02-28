@@ -445,6 +445,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json[]
       }
+      has_role: {
+        Args: {
+          user_id: string
+          role_name: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       game_mode_type: "softcore" | "hardcore" | "eternal" | "seasonal"

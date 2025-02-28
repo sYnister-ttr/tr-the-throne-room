@@ -13,9 +13,13 @@ const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) =>
 
   // Refresh user role when component mounts
   useEffect(() => {
-    if (user) {
-      refreshUserRole();
-    }
+    const loadUserRole = async () => {
+      if (user) {
+        await refreshUserRole();
+      }
+    };
+    
+    loadUserRole();
   }, [user, refreshUserRole]);
 
   if (loading) {
