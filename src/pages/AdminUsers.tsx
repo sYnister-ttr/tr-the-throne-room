@@ -7,8 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserManagementTable from "@/components/UserManagementTable";
 
 const AdminUsers = () => {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, refreshUserRole } = useAuth();
   const navigate = useNavigate();
+
+  // Refresh user role when component mounts
+  useEffect(() => {
+    refreshUserRole();
+  }, [refreshUserRole]);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
