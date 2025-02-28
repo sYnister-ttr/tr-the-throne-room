@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase, signOutAndClearStorage } from "@/lib/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 export type UserRole = "admin" | "moderator" | "user";
 
@@ -38,6 +39,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       console.log("Fetching role for user ID:", userId);
+      
+      // First check if the user_roles table is accessible
+      const { count, error: countError } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (countError) {
+        console.error("Error accessing user_roles table:", countError);
+        toast({
+          variant: "destructive",
+          title: "Database Error",
+          description: "Unable to access user roles. This might be a permissions issue."
+        });
+        return null;
+      }
+      
+      console.log("Successfully accessed user_roles table. Count:", count);
+      
+      // Now try to fetch the specific user's role
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -46,11 +66,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error("Error fetching user role:", error);
+        toast({
+          variant: "destructive",
+          title: "Role Error",
+          description: `Failed to fetch role: ${error.message}`
+        });
         return null;
       }
       
       console.log("User role data:", data);
-      return data?.role || 'user';
+      
+      if (!data) {
+        // If no role found, create default user role for this user
+        console.log("No role found for user. Attempting to create default role...");
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'user' });
+          
+        if (insertError) {
+          console.error("Error creating default user role:", insertError);
+          return 'user'; // Return default anyway
+        }
+        
+        console.log("Created default user role successfully");
+        return 'user';
+      }
+      
+      return data.role || 'user';
     } catch (error) {
       console.error("Exception fetching user role:", error);
       return null;
@@ -62,6 +104,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       setLoading(true);
+      console.log("Refreshing role for user:", user.id);
+      
       const role = await fetchUserRole(user.id);
       
       if (role) {
@@ -69,9 +113,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser({ ...user, role: role as UserRole });
         setIsAdmin(role === 'admin');
         setIsModerator(role === 'moderator' || role === 'admin');
+      } else {
+        console.warn("Could not determine user role, defaulting to regular user");
+        setUser({ ...user, role: 'user' as UserRole });
+        setIsAdmin(false);
+        setIsModerator(false);
       }
     } catch (error) {
       console.error("Error refreshing user role:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to refresh user role. Please try again."
+      });
     } finally {
       setLoading(false);
     }
@@ -82,7 +136,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkSession = async () => {
       try {
         setLoading(true);
-        const { data } = await supabase.auth.getSession();
+        console.log("Checking auth session...");
+        
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          return;
+        }
         
         if (data.session?.user) {
           console.log("Found authenticated user:", data.session.user.id);
@@ -95,9 +156,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           const role = await fetchUserRole(userWithoutRole.id);
           if (role) {
+            console.log("User has role:", role);
             setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
+          } else {
+            console.log("No role found for user, defaulting to 'user'");
+            setUser({ ...userWithoutRole, role: 'user' });
           }
         } else {
           console.log("No authenticated user found");
@@ -133,6 +198,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
+          } else {
+            setUser({ ...userWithoutRole, role: 'user' });
           }
           setLoading(false);
         } else {
