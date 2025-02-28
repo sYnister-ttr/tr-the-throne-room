@@ -5,19 +5,32 @@ import { Menu, X, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
   const handleSignOut = async () => {
+    toast({
+      title: "Signing out...",
+      duration: 2000,
+    });
+    
+    console.log("Sign out button clicked");
     await signOut();
     navigate("/");
+    
+    // Force reload after a short delay to ensure clean state
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   return (

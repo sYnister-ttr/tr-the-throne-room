@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase, signOutAndClearStorage } from "@/lib/supabase";
 
 export type UserRole = "admin" | "moderator" | "user";
 
@@ -138,10 +138,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setIsAdmin(false);
-      setIsModerator(false);
+      console.log("Signing out from AuthContext...");
+      const result = await signOutAndClearStorage();
+      if (!result.success) {
+        console.error("Error in signOut:", result.error);
+      }
     } catch (error) {
       console.error("Error signing out:", error);
     }

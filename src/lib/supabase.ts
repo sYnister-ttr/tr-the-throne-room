@@ -18,6 +18,34 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     storageKey: 'diablo-market-auth-storage-key',
     autoRefreshToken: true,
+    debug: true, // Enable debug mode to see more detailed auth logs
+    // Make sure to clear all storage on sign out
+    storage: {
+      getItem: (key) => {
+        try {
+          return localStorage.getItem(key);
+        } catch (error) {
+          console.error("localStorage.getItem error:", error);
+          return null;
+        }
+      },
+      setItem: (key, value) => {
+        try {
+          localStorage.setItem(key, value);
+          return;
+        } catch (error) {
+          console.error("localStorage.setItem error:", error);
+        }
+      },
+      removeItem: (key) => {
+        try {
+          localStorage.removeItem(key);
+          return;
+        } catch (error) {
+          console.error("localStorage.removeItem error:", error);
+        }
+      }
+    }
   },
   // Add global error handler for debugging
   global: {
@@ -90,5 +118,27 @@ export const safeLocalStorage = {
       console.error("localStorage.removeItem error:", error);
       return false;
     }
+  }
+};
+
+// Improved sign out that clears all local storage
+export const signOutAndClearStorage = async () => {
+  try {
+    console.log("Signing out and clearing storage...");
+    // First sign out from Supabase
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    
+    // Clear auth-related localStorage items
+    localStorage.removeItem('diablo-market-auth-storage-key');
+    localStorage.removeItem('supabase.auth.token');
+    
+    // Force page reload to ensure clean state
+    window.location.href = '/';
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Sign out error:", error);
+    return { success: false, error };
   }
 };
