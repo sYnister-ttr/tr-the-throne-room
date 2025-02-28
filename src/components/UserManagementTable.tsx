@@ -31,16 +31,36 @@ const UserManagementTable = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // This is calling the get_users_with_details database function
-      const { data, error } = await supabase.rpc('get_users_with_details');
+      // Get all users from the auth.users table (needs RLS policy or service role)
+      const { data: authUsers, error: authError } = await supabase
+        .from('auth_users_view')  // Using a view that exposes auth.users data
+        .select('id, email, last_sign_in_at, user_roles(role)');
       
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        console.log("Fetched users:", data);
-        setUsers(data);
+      if (authError) {
+        // Fallback to another method if the view doesn't exist
+        console.error("Error using auth_users_view:", authError);
+        
+        // Try using the stored procedure instead
+        const { data, error } = await supabase.rpc('get_users_with_details');
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          console.log("Fetched users via RPC:", data);
+          setUsers(data);
+        }
+      } else if (authUsers) {
+        console.log("Fetched users via view:", authUsers);
+        // Transform the data to match our User interface
+        const formattedUsers = authUsers.map(user => ({
+          id: user.id,
+          email: user.email,
+          last_sign_in_at: user.last_sign_in_at,
+          role: user.user_roles?.role || 'user'
+        }));
+        setUsers(formattedUsers);
       }
     } catch (error: any) {
       console.error("Error fetching users:", error);
