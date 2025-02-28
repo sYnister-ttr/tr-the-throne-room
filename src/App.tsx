@@ -18,6 +18,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import NotFound from "@/pages/NotFound";
 import Admin from "@/pages/Admin";
+import AdminUsers from "@/pages/AdminUsers";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -62,6 +63,11 @@ function App() {
             <Route path="/admin" element={
               <ProtectedRoute>
                 <Admin />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <AdminUsers />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
