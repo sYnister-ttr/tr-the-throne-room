@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +16,6 @@ import { GameType, PlatformType, GameModeType, LadderType, PaymentType } from "@
 const CreateTrade = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -47,34 +45,15 @@ const CreateTrade = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to create a trade.",
-      });
-      return;
-    }
-    
     setLoading(true);
+    console.log("CreateTrade - Submit started");
 
     try {
-      console.log("Creating trade with data:", {
-        user_id: user.id,
-        title,
-        description,
-        game,
-        platform,
-        game_mode: gameMode,
-        ladder_status: ladderStatus,
-        price: paymentType === 'currency' && price ? parseFloat(price) : null,
-        payment_type: paymentType,
-        payment_items: paymentType === 'items' ? paymentItems : null,
-      });
+      // Generate a temporary user ID for demo purposes
+      const tempUserId = `temp_${Date.now().toString()}`;
       
-      const { data, error } = await supabase.from("trades").insert({
-        user_id: user.id,
+      const tradeData = {
+        user_id: tempUserId,
         title,
         description,
         game,
@@ -85,7 +64,14 @@ const CreateTrade = () => {
         payment_type: paymentType,
         payment_items: paymentType === 'items' ? paymentItems : null,
         status: "active",
-      }).select();
+      };
+      
+      console.log("Creating trade with data:", tradeData);
+      
+      const { data, error } = await supabase
+        .from("trades")
+        .insert(tradeData)
+        .select();
 
       if (error) {
         console.error("Error creating trade:", error);

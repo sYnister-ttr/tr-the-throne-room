@@ -33,7 +33,7 @@ export interface Item {
   description?: string;
 }
 
-// Interfaces for runewords
+// New interfaces for runewords
 export interface VariableStat {
   min: number;
   max: number;

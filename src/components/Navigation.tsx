@@ -1,36 +1,16 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, Shield } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handleSignOut = async () => {
-    toast({
-      title: "Signing out...",
-      duration: 2000,
-    });
-    
-    console.log("Sign out button clicked");
-    await signOut();
-    navigate("/");
-    
-    // Force reload after a short delay to ensure clean state
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   };
 
   return (
@@ -43,56 +23,55 @@ const Navigation = () => {
                 to="/"
                 className="text-white font-bold text-xl hover:text-diablo-500 transition"
               >
-                TR Community
+                TR Admin
               </Link>
             </div>
-            {isAdmin && (
-              <div className="hidden md:block">
-                <div className="ml-10 flex items-baseline space-x-4">
-                  <Link
-                    to="/admin"
-                    className="text-diablo-500 hover:text-diablo-400 px-3 py-2 rounded-md text-sm font-medium flex items-center"
-                  >
-                    <Shield className="mr-1 h-4 w-4" />
-                    Admin
-                  </Link>
-                </div>
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                <Link
+                  to="/market"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Market
+                </Link>
+                <Link
+                  to="/price-check"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Price Check
+                </Link>
+                <Link
+                  to="/items"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Items
+                </Link>
+                <Link
+                  to="/runewords"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Runewords
+                </Link>
               </div>
-            )}
+            </div>
           </div>
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
-              {user ? (
-                <div className="flex items-center gap-4">
-                  <div className="text-gray-300 flex items-center">
-                    <User className="h-5 w-5 mr-1" />
-                    <span>{user.email}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
-                    onClick={handleSignOut}
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
-                    onClick={() => navigate("/login")}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    className="bg-diablo-500 hover:bg-diablo-700"
-                    onClick={() => navigate("/register")}
-                  >
-                    Sign Up
-                  </Button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white"
+                  onClick={() => navigate("/login")}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  className="bg-diablo-500 hover:bg-diablo-700"
+                  onClick={() => navigate("/register")}
+                >
+                  Sign Up
+                </Button>
+              </div>
             </div>
           </div>
           <div className="-mr-2 flex md:hidden">
@@ -114,61 +93,60 @@ const Navigation = () => {
       {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden">
-          {isAdmin && (
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link
-                to="/admin"
-                className="text-diablo-500 hover:text-diablo-400 block px-3 py-2 rounded-md text-base font-medium flex items-center"
-                onClick={toggleMenu}
-              >
-                <Shield className="mr-1 h-4 w-4" />
-                Admin
-              </Link>
-            </div>
-          )}
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link
+              to="/market"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={toggleMenu}
+            >
+              Market
+            </Link>
+            <Link
+              to="/price-check"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={toggleMenu}
+            >
+              Price Check
+            </Link>
+            <Link
+              to="/items"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={toggleMenu}
+            >
+              Items
+            </Link>
+            <Link
+              to="/runewords"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              onClick={toggleMenu}
+            >
+              Runewords
+            </Link>
+          </div>
           <Separator />
           <div className="pt-4 pb-3 border-gray-800">
             <div className="flex items-center px-5">
-              {user ? (
-                <div className="flex flex-col w-full gap-2">
-                  <div className="text-gray-300 flex items-center px-3 py-2">
-                    <User className="h-5 w-5 mr-1" />
-                    <span>{user.email}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
-                    onClick={() => {
-                      handleSignOut();
-                      toggleMenu();
-                    }}
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col w-full gap-2">
-                  <Button
-                    variant="outline"
-                    className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
-                    onClick={() => {
-                      navigate("/login");
-                      toggleMenu();
-                    }}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    className="bg-diablo-500 hover:bg-diablo-700 w-full"
-                    onClick={() => {
-                      navigate("/register");
-                      toggleMenu();
-                    }}
-                  >
-                    Sign Up
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col w-full gap-2">
+                <Button
+                  variant="outline"
+                  className="border-diablo-500 text-diablo-500 hover:bg-diablo-500 hover:text-white w-full"
+                  onClick={() => {
+                    navigate("/login");
+                    toggleMenu();
+                  }}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  className="bg-diablo-500 hover:bg-diablo-700 w-full"
+                  onClick={() => {
+                    navigate("/register");
+                    toggleMenu();
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </div>
             </div>
           </div>
         </div>

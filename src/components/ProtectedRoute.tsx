@@ -1,43 +1,41 @@
 
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  adminOnly?: boolean;
 }
 
-const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin, refreshUserRole } = useAuth();
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  // Refresh user role when component mounts
+  // Log the authentication state for debugging
   useEffect(() => {
-    const loadUserRole = async () => {
-      if (user) {
-        await refreshUserRole();
-      }
-    };
+    console.log("ProtectedRoute - Auth State:", { user: user?.id, loading });
     
-    loadUserRole();
-  }, [user, refreshUserRole]);
+    // If loading is done and there's no user, redirect to login
+    if (!loading && !user) {
+      console.log("ProtectedRoute - Redirecting to login");
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-xl text-gray-400">Loading...</div>
+        <div className="text-xl text-gray-400">Loading authentication...</div>
       </div>
     );
   }
 
   if (!user) {
+    console.log("ProtectedRoute - No user, redirecting to login");
     return <Navigate to="/login" />;
   }
 
-  if (adminOnly && !isAdmin) {
-    return <Navigate to="/" />;
-  }
-
+  console.log("ProtectedRoute - User authenticated, rendering children");
   return <>{children}</>;
 };
 

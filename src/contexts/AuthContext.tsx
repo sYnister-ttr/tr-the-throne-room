@@ -1,8 +1,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase, signOutAndClearStorage } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
 
 export type UserRole = "admin" | "moderator" | "user";
 
@@ -12,6 +12,7 @@ interface UserWithRole extends User {
 
 interface AuthContextType {
   user: UserWithRole | null;
+  session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -20,7 +21,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({ 
-  user: null, 
+  user: null,
+  session: null,
   loading: true,
   signOut: async () => {},
   isAdmin: false,
@@ -30,69 +32,28 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserWithRole | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModerator, setIsModerator] = useState(false);
+  const { toast } = useToast();
 
   const fetchUserRole = async (userId: string) => {
-    if (!userId) return null;
-    
     try {
       console.log("Fetching role for user ID:", userId);
-      
-      // First check if the user_roles table is accessible
-      const { count, error: countError } = await supabase
-        .from('user_roles')
-        .select('*', { count: 'exact', head: true });
-      
-      if (countError) {
-        console.error("Error accessing user_roles table:", countError);
-        toast({
-          variant: "destructive",
-          title: "Database Error",
-          description: "Unable to access user roles. This might be a permissions issue."
-        });
-        return null;
-      }
-      
-      console.log("Successfully accessed user_roles table. Count:", count);
-      
-      // Now try to fetch the specific user's role
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .maybeSingle();
+        .single();
       
       if (error) {
         console.error("Error fetching user role:", error);
-        toast({
-          variant: "destructive",
-          title: "Role Error",
-          description: `Failed to fetch role: ${error.message}`
-        });
         return null;
       }
       
       console.log("User role data:", data);
-      
-      if (!data) {
-        // If no role found, create default user role for this user
-        console.log("No role found for user. Attempting to create default role...");
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role: 'user' });
-          
-        if (insertError) {
-          console.error("Error creating default user role:", insertError);
-          return 'user'; // Return default anyway
-        }
-        
-        console.log("Created default user role successfully");
-        return 'user';
-      }
-      
-      return data.role || 'user';
+      return data?.role || 'user';
     } catch (error) {
       console.error("Exception fetching user role:", error);
       return null;
@@ -102,32 +63,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUserRole = async () => {
     if (!user) return;
     
-    try {
-      setLoading(true);
-      console.log("Refreshing role for user:", user.id);
-      
-      const role = await fetchUserRole(user.id);
-      
-      if (role) {
-        console.log("Updated user role to:", role);
-        setUser({ ...user, role: role as UserRole });
-        setIsAdmin(role === 'admin');
-        setIsModerator(role === 'moderator' || role === 'admin');
-      } else {
-        console.warn("Could not determine user role, defaulting to regular user");
-        setUser({ ...user, role: 'user' as UserRole });
-        setIsAdmin(false);
-        setIsModerator(false);
-      }
-    } catch (error) {
-      console.error("Error refreshing user role:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh user role. Please try again."
-      });
-    } finally {
-      setLoading(false);
+    const role = await fetchUserRole(user.id);
+    if (role) {
+      setUser({ ...user, role: role as UserRole });
+      setIsAdmin(role === 'admin');
+      setIsModerator(role === 'moderator' || role === 'admin');
     }
   };
 
@@ -135,18 +75,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Initial auth state check
     const checkSession = async () => {
       try {
-        setLoading(true);
-        console.log("Checking auth session...");
-        
+        console.log("Checking initial auth session...");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Failed to get authentication session. Please try logging in again.",
+          });
+          setLoading(false);
           return;
         }
         
         if (data.session?.user) {
           console.log("Found authenticated user:", data.session.user.id);
+          setSession(data.session);
+          
           const userWithoutRole = { 
             ...data.session.user,
             role: undefined as unknown as UserRole
@@ -156,22 +102,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           const role = await fetchUserRole(userWithoutRole.id);
           if (role) {
-            console.log("User has role:", role);
             setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
-          } else {
-            console.log("No role found for user, defaulting to 'user'");
-            setUser({ ...userWithoutRole, role: 'user' });
           }
         } else {
           console.log("No authenticated user found");
           setUser(null);
+          setSession(null);
           setIsAdmin(false);
           setIsModerator(false);
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error("Exception checking session:", error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "An unexpected error occurred. Please try logging in again.",
+        });
       } finally {
         setLoading(false);
       }
@@ -185,7 +133,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.id);
         
         if (session?.user) {
-          setLoading(true);
+          setSession(session);
+          
           const userWithoutRole = { 
             ...session.user,
             role: undefined as unknown as UserRole
@@ -198,39 +147,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser({ ...userWithoutRole, role: role as UserRole });
             setIsAdmin(role === 'admin');
             setIsModerator(role === 'moderator' || role === 'admin');
-          } else {
-            setUser({ ...userWithoutRole, role: 'user' });
           }
-          setLoading(false);
         } else {
           setUser(null);
+          setSession(null);
           setIsAdmin(false);
           setIsModerator(false);
-          setLoading(false);
         }
+        
+        setLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   const signOut = async () => {
     try {
-      console.log("Signing out from AuthContext...");
-      const result = await signOutAndClearStorage();
-      if (!result.success) {
-        console.error("Error in signOut:", result.error);
+      console.log("Signing out user");
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to sign out",
+        });
+      } else {
+        setUser(null);
+        setSession(null);
+        setIsAdmin(false);
+        setIsModerator(false);
+        toast({
+          title: "Signed Out",
+          description: "You have been successfully signed out",
+        });
       }
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Exception signing out:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred while signing out",
+      });
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
+      session,
       loading, 
       signOut, 
       isAdmin, 
