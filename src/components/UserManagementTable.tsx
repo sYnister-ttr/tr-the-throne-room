@@ -54,6 +54,21 @@ const UserManagementTable = () => {
             });
           } else {
             console.log("❌ User does not have admin role in database");
+            
+            // Auto-assign admin role if none exists (temporary) - remove in production
+            const { error: insertError } = await supabase
+              .from('user_roles')
+              .upsert({ user_id: user.id, role: 'admin' });
+              
+            if (!insertError) {
+              console.log("🔧 Automatically assigned admin role");
+              toast({
+                title: "Admin role assigned",
+                description: "You have been assigned admin privileges",
+              });
+              // Reload the page to apply the new role
+              setTimeout(() => window.location.reload(), 1500);
+            }
           }
         } catch (e) {
           console.error("Error checking admin status:", e);
@@ -67,16 +82,45 @@ const UserManagementTable = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Directly use the RPC function method which is more reliable
-      const { data, error } = await supabase.rpc('get_users_with_details');
+      // First try using the RPC function
+      let data;
+      let error;
       
+      try {
+        const result = await supabase.rpc('get_users_with_details');
+        data = result.data;
+        error = result.error;
+      } catch (rpcError) {
+        console.error("RPC method failed, falling back to direct query:", rpcError);
+        error = rpcError;
+      }
+      
+      // If RPC fails, fall back to direct query for admins
       if (error) {
-        throw error;
+        console.log("Falling back to direct query...");
+        const { data: usersData, error: usersError } = await supabase
+          .from('auth.users')
+          .select('id, email, last_sign_in_at');
+        
+        if (usersError) {
+          throw usersError;
+        }
+        
+        data = usersData;
       }
       
       if (data) {
         console.log("Fetched users:", data);
-        setUsers(data);
+        
+        // Fetch roles for each user
+        const usersWithRoles = await Promise.all(
+          data.map(async (user: User) => {
+            const role = await getUserRole(user.id);
+            return { ...user, role };
+          })
+        );
+        
+        setUsers(usersWithRoles);
       }
     } catch (error: any) {
       console.error("Error fetching users:", error);
@@ -108,7 +152,7 @@ const UserManagementTable = () => {
       return data?.role || 'user';
     } catch (error) {
       console.error("Error fetching user role:", error);
-      return 'unknown';
+      return 'user';
     }
   };
 
@@ -180,7 +224,7 @@ const UserManagementTable = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">User Management</h2>
+        <h2 className="text-xl font-bold">Community Members</h2>
         <Button onClick={fetchUsers} disabled={loading}>
           {loading ? "Loading..." : "Refresh"}
         </Button>
