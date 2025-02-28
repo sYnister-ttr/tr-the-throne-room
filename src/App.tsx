@@ -61,12 +61,12 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly={true}>
                 <Admin />
               </ProtectedRoute>
             } />
             <Route path="/admin/users" element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly={true}>
                 <AdminUsers />
               </ProtectedRoute>
             } />

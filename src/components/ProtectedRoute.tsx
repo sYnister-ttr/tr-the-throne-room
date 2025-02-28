@@ -1,13 +1,22 @@
 
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  adminOnly?: boolean;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
+  const { user, loading, isAdmin, refreshUserRole } = useAuth();
+
+  // Refresh user role when component mounts
+  useEffect(() => {
+    if (user) {
+      refreshUserRole();
+    }
+  }, [user, refreshUserRole]);
 
   if (loading) {
     return (
@@ -19,6 +28,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!user) {
     return <Navigate to="/login" />;
+  }
+
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/" />;
   }
 
   return <>{children}</>;
