@@ -30,18 +30,27 @@ const UserManagementTable = () => {
 
   // Make sure we refresh the user's role when the component mounts
   useEffect(() => {
-    refreshUserRole();
-  }, [refreshUserRole]);
+    if (user) {
+      refreshUserRole();
+    }
+  }, [user, refreshUserRole]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // First, check if the function exists and can be called
+      console.log("Fetching users...");
+      
+      // First, fetch all users through the get_users_with_details RPC function
       const { data: functionData, error: functionError } = await supabase
         .rpc('get_users_with_details');
         
-      if (!functionError && functionData) {
-        console.log("Successfully fetched users via RPC function:", functionData);
+      if (functionError) {
+        console.error("Error fetching users via RPC function:", functionError);
+        throw functionError;
+      }
+      
+      if (functionData) {
+        console.log("Successfully fetched users:", functionData);
         
         // Process the data from the function
         const usersWithRoles = await Promise.all(
@@ -53,31 +62,8 @@ const UserManagementTable = () => {
         
         setUsers(usersWithRoles);
       } else {
-        console.log("Function error or not available:", functionError);
-        
-        // Fallback to direct query
-        const { data, error } = await supabase
-          .from('auth.users')
-          .select('id, email, last_sign_in_at');
-        
-        if (error) {
-          console.error("Error fetching users:", error);
-          throw error;
-        }
-        
-        if (data) {
-          console.log("Fetched users via direct query:", data);
-          
-          // Fetch roles for each user
-          const usersWithRoles = await Promise.all(
-            data.map(async (user: User) => {
-              const role = await getUserRole(user.id);
-              return { ...user, role };
-            })
-          );
-          
-          setUsers(usersWithRoles);
-        }
+        console.log("No users found");
+        setUsers([]);
       }
     } catch (error: any) {
       console.error("Error fetching users:", error);
@@ -86,6 +72,7 @@ const UserManagementTable = () => {
         title: "Error",
         description: `Failed to load users: ${error.message}`,
       });
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -99,6 +86,7 @@ const UserManagementTable = () => {
 
   const getUserRole = async (userId: string) => {
     try {
+      console.log("Fetching role for user ID:", userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -109,15 +97,19 @@ const UserManagementTable = () => {
         console.error("Error fetching user role:", error);
         return 'user';
       }
+      
+      console.log("Role data for user:", data);
       return data?.role || 'user';
     } catch (error) {
-      console.error("Error fetching user role:", error);
+      console.error("Exception fetching user role:", error);
       return 'user';
     }
   };
 
   const setUserRole = async (userId: string, newRole: 'admin' | 'moderator' | 'user') => {
     try {
+      console.log(`Setting user ${userId} to role ${newRole}`);
+      
       // Upsert approach is more reliable
       const { error } = await supabase
         .from('user_roles')
@@ -126,8 +118,12 @@ const UserManagementTable = () => {
           role: newRole 
         });
           
-      if (error) throw error;
+      if (error) {
+        console.error("Error setting user role:", error);
+        throw error;
+      }
       
+      console.log("Successfully updated user role");
       toast({
         title: "Success",
         description: `User role updated to ${newRole}`,
